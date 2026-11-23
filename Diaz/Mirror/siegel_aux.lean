@@ -8,7 +8,7 @@ Names and spellings that changed between the platform's Mathlib revision and the
 pinned here were updated to match, and proof steps that became no-ops there were
 dropped; the mathematics is unchanged.
 -/
--- Origin: `Diaz/Mirror/siegel_aux.lean` in https://github.com/carlok/diaz-modulus-lean at 465147a3ec8b
+-- Origin: `Diaz/Mirror/siegel_aux.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
 -- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
@@ -48,7 +48,7 @@ lemma c_ne_zero {ω ω₁ : ℂ} {Q : Polynomial (Polynomial ℤ)} (hQd : 0 < Q.
   funext μ ν
   have hc := congrArg (fun p : Polynomial (Polynomial ℤ) => (p.coeff ν).coeff μ) hP0
   simp only [P, f, finsetSum_coeff, coeff_C_mul_X_pow, coeff_zero, Fin.val_inj, Finset.sum_ite_eq,
-    Finset.sum_ite_eq', Finset.mem_univ, ite_true, coeff_monomial_apply] at hc
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true, coeff_monomial] at hc
   simpa using hc
 
 end FourExpSiegel

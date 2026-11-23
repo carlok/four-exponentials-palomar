@@ -4,11 +4,8 @@ Mirrored from Prove2Me: `DiazModulus.two_algebraically_independent_of_exp_column
 Ported mechanically from the accepted submission archived as
 `archive/prove2me/DiazModulus.two_algebraically_independent_of_exp_column__952ea261.lean`. Statement and proof are the platform's; only
 imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
 -/
--- Origin: `Diaz/Mirror/two_algebraically_independent_of_exp_column.lean` in https://github.com/carlok/diaz-modulus-lean at 465147a3ec8b
+-- Origin: `Diaz/Mirror/two_algebraically_independent_of_exp_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
 -- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
@@ -44,7 +41,6 @@ Suppose that no two of the eight numbers `xᵢ`, `yⱼ`, `e^{xᵢyⱼ}` are alge
 No rank-one parametrization is needed: the hypothesis is already stated in `x`, `y` form.
 -/
 
-set_option maxHeartbeats 500000 in
 theorem two_algebraically_independent_of_exp_column :
     ∀ x₁ x₂ y₁ y₂ : ℂ, LinearIndependent ℚ ![x₁, x₂] → LinearIndependent ℚ ![y₁, y₂] →
       IsAlgebraic ℚ (Complex.exp (x₁ * y₂)) → IsAlgebraic ℚ (Complex.exp (x₂ * y₂)) →

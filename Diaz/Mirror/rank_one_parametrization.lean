@@ -4,11 +4,8 @@ Mirrored from Prove2Me: `FourExp.rank_one_parametrization`.
 Ported mechanically from the accepted submission archived as
 `archive/prove2me/FourExp.rank_one_parametrization__8517773b.lean`. Statement and proof are the platform's; only
 imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
 -/
--- Origin: `Diaz/Mirror/rank_one_parametrization.lean` in https://github.com/carlok/diaz-modulus-lean at 465147a3ec8b
+-- Origin: `Diaz/Mirror/rank_one_parametrization.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
 -- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
@@ -107,7 +104,7 @@ theorem rank_one_parametrization :
       refine ⟨Polynomial.C ⟨l₁₁, Algebra.subset_adjoin (by simp)⟩ * Polynomial.X
         - Polynomial.C ⟨l₁₂, Algebra.subset_adjoin (by simp)⟩, ?_, ?_⟩
       · intro hzero
-        have hc := congrArg (fun p => AddMonoidAlgebra.coeff p 1) hzero
+        have hc := congrArg (fun p => Polynomial.coeff p 1) hzero
         simp [Polynomial.coeff_C] at hc
         exact h11 (by simpa using congrArg Subtype.val hc)
       · simp [Polynomial.aeval_def, Polynomial.eval₂_sub, Polynomial.eval₂_mul, ht12]
