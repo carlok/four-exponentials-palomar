@@ -1,0 +1,200 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+# formalization.yaml v0.4
+version: v0.4
+project:
+  name: The four exponentials theorem in transcendence degree one, and Schneider's eighth problem
+  description: 'The four exponentials theorem in transcendence degree one (Waldschmidt 1973; Brownawell
+    1974). Let lᵢⱼ be four non-zero logarithms of algebraic numbers with l₁₁ l₂₂ = l₁₂ l₂₁. If the
+    field they generate has transcendence degree at most one over ℚ, then the rows or the columns
+    of the matrix (lᵢⱼ) are linearly dependent over ℚ. Schneider''s eighth problem (Waldschmidt 1973;
+    Brownawell 1974): one of e^e and e^{e²} is transcendental. If x₁, x₂ and y₁, y₂ are each linearly
+    independent over ℚ and exp (x₁ y₂), exp (x₂ y₂) are algebraic, then two of the eight numbers xᵢ,
+    yⱼ, exp (xᵢ yⱼ) are algebraically independent over ℚ (Waldschmidt 1973; Brownawell 1974). This
+    repository is a self-contained extract of these theorems from the library github.com/carlok/diaz-modulus-lean,
+    which is the canonical home of the proofs.'
+  authors:
+  - Carlo Perassi
+  license: Apache-2.0
+  responsible_maintainers:
+  - Carlo Perassi
+classification:
+  arxiv:
+  - math.NT
+  - cs.LO
+  msc2020:
+  - 11J85
+  - 11J81
+  - 68V20
+sources:
+- title: Solution du huitième problème de Schneider
+  authors:
+  - Michel Waldschmidt
+  type: paper
+  location: Journal of Number Theory 5 (1973), 191–202
+  relationship: formalizes
+  note: The Lean proof follows Waldschmidt's 1973 proof with the toolbox of his 1971 paper. One hypothesis
+    of Lemme 2, met in print with Gel'fond's two-logarithm bound, is made unnecessary by the separation-free
+    zero count of 1971.
+  license: unknown
+  author_endorsement: n/a
+- title: The algebraic independence of certain numbers related by the exponential function
+  authors:
+  - W. Dale Brownawell
+  type: paper
+  location: Journal of Number Theory 6 (1974), 22–31
+  relationship: formalizes
+  note: Brownawell proved the same results independently.
+  license: unknown
+  author_endorsement: n/a
+- title: Indépendance algébrique des valeurs de la fonction exponentielle
+  authors:
+  - Michel Waldschmidt
+  type: paper
+  location: Bulletin de la Société Mathématique de France 99 (1971), 285–304
+  relationship: background
+  note: Gel'fond's transcendence criterion in the 1971 form and the zero count used by the proof.
+  license: unknown
+  author_endorsement: n/a
+related_formalizations:
+- id: https://github.com/carlok/diaz-modulus-lean
+  relationship: other
+  note: The canonical home of these proofs, by the same author, and of a wider library on Diaz's conjecture.
+    This repository copies the import closure of the compared theorems (69 modules, at commit 465147a3ec8bec43ad0046c1f3ccdfc41afc88cf)
+    with only the changes the Lean module system needs, so that they can be checked on their own.
+    The module paths and namespaces are those of the library. Corrections are made there first.
+- id: https://github.com/leanprover-community/mathlib4/pull/28013
+  relationship: other
+  note: The module Diaz.LindemannWeierstrass in this extract is ported from this unmerged Mathlib
+    pull request (Lindemann–Weierstrass), with credit to its authors. It lies in the import closure
+    through Diaz.Axioms; the compared theorems are not taken from it.
+- id: https://palomar-registry.org/entry?id=PALOMAR-2026-11-22-000020&version=1
+  relationship: other
+  note: The six exponentials theorem from the same library, registered separately by the same author
+    on 2026-11-22. It is not compared again here.
+status:
+  scope: 'Formalized and compared: FourExponentials.four_exponentials_trdeg_one (Waldschmidt 1973;
+    Brownawell 1974); FourExponentials.exp_e_or_exp_e_sq_transcendental (Waldschmidt 1973 (solution
+    of Schneider''s eighth problem); Brownawell 1974); FourExponentials.two_algebraically_independent_of_exp_column
+    (Waldschmidt 1973; Brownawell 1974). Not formalized: The four exponentials conjecture itself,
+    which is open; algebraic independence results beyond transcendence degree one.'
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms:
+  - propext
+  - Classical.choice
+  - Quot.sound
+  main_results:
+  - declaration: FourExponentials.four_exponentials_trdeg_one
+    file: Solution.lean
+    sorry_count: 0
+    axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  - declaration: FourExponentials.exp_e_or_exp_e_sq_transcendental
+    file: Solution.lean
+    sorry_count: 0
+    axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  - declaration: FourExponentials.two_algebraically_independent_of_exp_column
+    file: Solution.lean
+    sorry_count: 0
+    axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  - declaration: Diaz.four_exponentials_trdeg_one
+    file: Diaz/Mirror/four_exponentials_trdeg_one.lean
+    sorry_count: 0
+    axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  - declaration: Transcendence.exp_e_or_exp_e_sq_transcendental
+    file: Diaz/Mirror/exp_e_or_exp_e_sq_transcendental.lean
+    sorry_count: 0
+    axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+  - declaration: Diaz.two_algebraically_independent_of_exp_column
+    file: Diaz/Mirror/two_algebraically_independent_of_exp_column.lean
+    sorry_count: 0
+    axioms:
+    - propext
+    - Classical.choice
+    - Quot.sound
+automation:
+  methods:
+  - method: agent
+    models:
+    - Claude (Anthropic); the model version was not recorded per proof
+    framework: Claude Code
+    tool_setup: Claude agents (Anthropic) wrote the Lean statements and proofs under Carlo Perassi's
+      direction, one statement at a time, and submitted them to the Prove2Me platform (https://prove2.me),
+      which checked and accepted them. They were then mirrored into diaz-modulus-lean. The proofs
+      use ordinary Mathlib tactics and terms; there is no native_decide.
+    cost:
+      wall_time: not tracked
+      spend_usd: not tracked
+      hardware: local machine
+    prompting_notes: not recorded
+  - method: agent
+    models:
+    - Claude Opus 5.5
+    framework: Claude Code
+    tool_setup: 'A Claude agent made this extract under Carlo Perassi''s direction: it copied the
+      69 modules of the import closure from diaz-modulus-lean, made the module-system changes, and
+      wrote Challenge.lean, Solution.lean, this file, the README and the CI workflow.'
+    cost:
+      wall_time: not tracked
+      spend_usd: not tracked
+      hardware: cloud workspace
+    prompting_notes: not recorded
+  spend_usd: not tracked
+  notes: 'The Lean code and the texts in this repository were written by Claude agents (Anthropic)
+    under the direction of Carlo Perassi, who is responsible for them. No claim rests on an assertion
+    by a language model: the proofs are checked by Lean''s kernel at the pinned toolchain, and the
+    axioms of the compared theorems are audited in CI.'
+fidelity:
+  divergences: None known. Each Challenge statement is written with Mathlib's notions only. The four
+    exp lᵢⱼ are algebraic over ℚ and the lᵢⱼ are non-zero. l₁₁ * l₂₂ = l₁₂ * l₂₁ says the matrix has
+    rank one; Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ {l₁₁, l₁₂, l₂₁, l₂₂}) ≤ 1 is the transcendence-degree
+    hypothesis. The conclusion gives rationals a, b, not both zero, annihilating the two columns,
+    or the two rows. Complex.exp (Complex.exp 1) is e^e and Complex.exp (Complex.exp 1 ^ 2) is e^{e²};
+    Transcendental ℚ is Mathlib's "not algebraic over ℚ". The hypotheses fix one column of the matrix
+    (exp (xᵢ yⱼ)) as algebraic. The conclusion picks a, b from the eight-element set and asserts AlgebraicIndependent
+    ℚ ![a, b]; in particular a ≠ b. The compared theorems live in the namespace FourExponentials and
+    the library theorems keep their library names; the statements are the same up to unfolding the
+    library's abbreviations.
+review:
+  status: machine-checked; no human expert review of the Lean
+  reviewers: []
+  notes: 'Checks made: the Prove2Me platform checked and accepted the proofs when they were first
+    submitted, and diaz-modulus-lean builds them in CI with leanprover/lean4:v4.36.0 and Mathlib v4.36.0.
+    This repository''s CI builds the extract, audits the axioms with #print axioms, and runs the toolchain''s
+    lake comparator. No mathematician has reviewed the Lean code, and the Challenge statements have
+    not been reviewed against the sources by anyone independent of their authors.'
+alignment:
+  namespace: FourExponentials
+  statements:
+  - source: Waldschmidt 1973; Brownawell 1974
+    lean: FourExponentials.four_exponentials_trdeg_one
+    module: Challenge
+    status: proved
+    note: Proved by the library theorem Diaz.four_exponentials_trdeg_one.
+  - source: Waldschmidt 1973 (solution of Schneider's eighth problem); Brownawell 1974
+    lean: FourExponentials.exp_e_or_exp_e_sq_transcendental
+    module: Challenge
+    status: proved
+    note: Proved by the library theorem Transcendence.exp_e_or_exp_e_sq_transcendental.
+  - source: Waldschmidt 1973; Brownawell 1974
+    lean: FourExponentials.two_algebraically_independent_of_exp_column
+    module: Challenge
+    status: proved
+    note: Proved by the library theorem Diaz.two_algebraically_independent_of_exp_column.
+acknowledgements: 'The Mathlib community, for Lean 4 and Mathlib; the authors of Mathlib pull request
+  #28013 (Lindemann–Weierstrass), whose code is ported in the library; and the Prove2Me platform,
+  where the proofs were first submitted and checked.'

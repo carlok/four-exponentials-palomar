@@ -1,0 +1,16 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": [
+    "FourExponentials.four_exponentials_trdeg_one",
+    "FourExponentials.exp_e_or_exp_e_sq_transcendental",
+    "FourExponentials.two_algebraically_independent_of_exp_column"
+  ],
+  "definition_names": [],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}
