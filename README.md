@@ -38,10 +38,15 @@ Lean 4.36.0, Mathlib v4.36.0, and [Tau Ceti](https://github.com/TauCetiProject/T
 `0642eae`. `scripts/verify-comparator.sh` runs the toolchain's `lake comparator` the way Palomar
 does.
 
-## Since the registered commit
+## Since the Palomar submission commit
 
-Palomar registered commit `adc5d6e` (Lean and Mathlib v4.35.0). The statements in
-`Challenge.lean` have not changed since. The later commits prepare the extract for
+Commit `adc5d6e` (Lean and Mathlib v4.35.0) is the version prepared for submission to Palomar.
+The statements in `Challenge.lean` have not changed since. The lead theorem alone is registered
+with Palomar as
+[PALOMAR-2026-11-28-000054](https://palomar-registry.org/entry?id=PALOMAR-2026-11-28-000054&version=1),
+from a separate extract,
+[carlok/four-exponentials-trdeg-one-lean](https://github.com/carlok/four-exponentials-trdeg-one-lean)
+at `0c87279`; the two consequences are not part of that registration. The later commits prepare the extract for
 [Lean Pool](https://github.com/LeanPool/lean-pool):
 
 - Lean and Mathlib v4.36.0, with Tau Ceti as a dependency. Hermite–Lindemann is Tau Ceti's

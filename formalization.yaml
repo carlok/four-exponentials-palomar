@@ -66,12 +66,12 @@ related_formalizations:
     This repository copies the modules the compared theorems need (from commit 465147a3ec8b of the
     library, on Lean and Mathlib v4.36.0), so that they can be checked on their own. The module paths
     and namespaces are those of the library. The README lists the changes made since the commit
-    registered with Palomar (adc5d6e, on v4.35.0).
+    prepared for Palomar (adc5d6e, on v4.35.0).
 - id: https://github.com/TauCetiProject/TauCeti
   relationship: builds-on
   note: A Lake dependency, pinned at commit 0642eae29e0a59ef798d04de325386445906e755. The extract
     takes Hermite–Lindemann (TauCeti.transcendental_exp_of_isAlgebraic) and Schwarz's lemma with
-    prescribed zeros (TauCeti.norm_le_mul_prod_div_pow) from it. Up to the registered commit, the
+    prescribed zeros (TauCeti.norm_le_mul_prod_div_pow) from it. Up to commit adc5d6e, the
     extract instead carried a port of the Lindemann–Weierstrass development of the unmerged Mathlib
     pull request #28013 and its own division by the zeros.
 - id: https://palomar-registry.org/entry?id=PALOMAR-2026-11-22-000020&version=1
@@ -155,7 +155,7 @@ automation:
     tool_setup: 'A Claude agent made this extract under Carlo Perassi''s direction: it copied the
       modules of the import closure from diaz-modulus-lean, made the module-system changes, and
       wrote Challenge.lean, Solution.lean, this file, the README and the CI workflow. After the
-      registered commit it moved the extract to Lean and Mathlib v4.36.0 and Tau Ceti, dropped
+      commit adc5d6e it moved the extract to Lean and Mathlib v4.36.0 and Tau Ceti, dropped
       the modules the compared theorems do not use, and adapted the code to the Lean Pool
       conventions (minimal imports, no option overrides, Mathlib''s standard linters).'
     cost:
@@ -207,5 +207,5 @@ alignment:
     note: Proved by the library theorem Diaz.two_algebraically_independent_of_exp_column.
 acknowledgements: 'The Mathlib community, for Lean 4 and Mathlib; the Tau Ceti project, for
   Hermite–Lindemann and Schwarz''s lemma; the authors of Mathlib pull request #28013
-  (Lindemann–Weierstrass), whose code is ported in the library and was used up to the registered
-  commit; and the Prove2Me platform, where the proofs were first submitted and checked.'
+  (Lindemann–Weierstrass), whose code is ported in the library and was used up to commit
+  adc5d6e; and the Prove2Me platform, where the proofs were first submitted and checked.'
