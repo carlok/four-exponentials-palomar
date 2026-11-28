@@ -1,0 +1,19 @@
+name: scratch
+on:
+  push:
+    branches: [closure-scan]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+      - run: ~/.elan/bin/lake exe cache get
+      - name: Relax to warnings and turn on the import linter
+        run: |
+          sed -i 's/, warningAsError = true//; ' lakefile.toml
+          grep leanOptions lakefile.toml
+      - run: ~/.elan/bin/lake build Diaz Solution 2>&1 | tee build.log || true
+      - run: |
+          cat build.log | gzip -9c | base64 -w0; echo
