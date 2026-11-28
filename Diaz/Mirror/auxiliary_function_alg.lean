@@ -43,7 +43,7 @@ $$ F_q^{(m)}(ay_1+by_2)=0\qquad\text{for all }a<t_1,\ b<t_2,\ m<S. $$ -/
 theorem auxiliary_function_alg
     (x₁ x₂ y₁ y₂ : ℂ)
     (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁,
-        y₂] j))) (ω ω₁ : ℂ) (hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm :
+        y₂] j))) (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm :
             Q.Monic) (hQd : 0 < Q.natDegree)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
     (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →

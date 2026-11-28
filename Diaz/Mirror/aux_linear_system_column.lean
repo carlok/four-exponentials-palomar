@@ -204,7 +204,7 @@ theorem aux_linear_system_column
       have : (0 : ℝ) ≤ (N : ℝ) * Real.sqrt (Real.log (N : ℝ)) := by positivity
       push_cast; linarith
     refine (Nat.cast_le.2
-        ((AuxLinearSystemColumn.aux_linear_system_column_natAbs_coeff_le_length _ r h).trans
+        ((Diaz.AuxLinearSystem.natAbs_coeff_le_length _ r h).trans
       (hRl a b m i j k μ ν))).trans ?_
     refine (hκb N S (2 * N) a b m hN3 hSr hm.le le_rfl hA hB).trans ?_
     exact Real.exp_le_exp.2 (mul_le_mul_of_nonneg_right (by linarith) (by positivity))

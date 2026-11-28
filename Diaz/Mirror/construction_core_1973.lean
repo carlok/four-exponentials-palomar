@@ -67,7 +67,7 @@ theorem construction_core_1973
   unfold ConstructionGrowth.A ConstructionGrowth.B
   obtain ⟨ω, ω₁, hω, Q, hQm, hQd, hQroot, hQmin, D, E, G, H, hD, hE, hG, hH⟩ :=
     trdeg_one_presentation x₁ x₂ y₁ y₂ hx hy hexp htr
-  obtain ⟨κ, hκ, N₃, h3⟩ := auxiliary_function_alg x₁ x₂ y₁ y₂ hexp ω ω₁ hω Q hQm hQd hQroot hQmin
+  obtain ⟨κ, hκ, N₃, h3⟩ := auxiliary_function_alg x₁ x₂ y₁ y₂ hexp ω ω₁ Q hQm hQd hQroot hQmin
     D E G H hD hE hG hH
   obtain ⟨κ', hκ', N₄, h4⟩ := extrapolation x₁ x₂ y₁ y₂ hy κ hκ
   obtain ⟨k, hk, h5⟩ := norm_to_polynomial_alg x₁ x₂ y₁ y₂ hexp ω ω₁ Q hQm hQd hQroot hQmin
