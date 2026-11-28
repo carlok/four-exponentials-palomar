@@ -1,16 +1,40 @@
 /-
-Mirrored from Prove2Me: `FourExp.transcendence_criterion`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.transcendence_criterion__194bf0ce.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/transcendence_criterion.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.transcendence_criterion_continuous
+public import Mathlib.Order.Filter.Defs
+public import Mathlib.Tactic.FunProp
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Ring
+
+/-!
+# Waldschmidt's transcendence criterion
+
+Let $\alpha\in\mathbb{C}$ and $\varepsilon>0$. Let $\sigma_1,\sigma_2\colon\mathbb{R}\to\mathbb{R}$
+be strictly increasing and tending to $+\infty$, and let $a_1,a_2\ge1$ be such that for every $x>0$
+$$ \sigma_2(x)\le\sigma_1(x),\qquad\sigma_i(x+1)\le a_i\,\sigma_i(x)\quad(i=1,2). $$
+Put $C=\max\{10+\varepsilon,(4+\varepsilon)a_1a_2\}$. Suppose that for every integer $N>N_0$ there
+is a non-zero $P_N\in\mathbb{Z}[X]$ with every coefficient of absolute value at most
+$e^{\sigma_1(N)}$, $\deg P_N\le\sigma_2(N)$ and $|P_N(\alpha)|<e^{-C\sigma_1(N)\sigma_2(N)}$. Then
+$\alpha$ is algebraic.
+
+Source: [Wal71, §3, Lemme fondamental], with constant $a_i$ as in Remark 2 there; a refinement of
+Gel'fond's criterion [Gel52, Ch. III, §4, Lemma VII].
+
+## References
+
+* [Gel52] A. O. Gel'fond, *Transcendental and Algebraic Numbers*, 1952.
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/transcendence_criterion.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.transcendence_criterion`.
+-/
 
 @[expose] public section
 
@@ -96,7 +120,8 @@ theorem I_continuous (σ : ℝ → ℝ) : Continuous (I σ) := by
 theorem I_tendsto (σ : ℝ → ℝ) (hσ : StrictMono σ) (ht : Tendsto σ atTop atTop) :
     Tendsto (I σ) atTop atTop := by
   have hshift : Tendsto (fun x : ℝ => σ (x - 1)) atTop atTop :=
-    ht.comp (tendsto_atTop_add_const_right atTop (-1) tendsto_id |>.congr (fun x => by simp [sub_eq_add_neg]))
+    ht.comp (tendsto_atTop_add_const_right atTop (-1) tendsto_id |>.congr (fun x =>
+        by simp [sub_eq_add_neg]))
   refine tendsto_atTop_mono (fun x => ?_) hshift
   have hk := Int.floor_le x
   have hk2 := Int.lt_floor_add_one x
@@ -142,6 +167,14 @@ theorem I_growth (σ : ℝ → ℝ) (a : ℝ) (h : ∀ x : ℝ, 0 < x → σ (x 
 end FourExpInterp
 
 open FourExpInterp in
+/-- **Waldschmidt's transcendence criterion.** Let $\alpha\in\mathbb{C}$ and $\varepsilon>0$. Let
+$\sigma_1,\sigma_2\colon\mathbb{R}\to\mathbb{R}$ be strictly increasing and tending to $+\infty$,
+and let $a_1,a_2\ge1$ be such that for every $x>0$
+$$ \sigma_2(x)\le\sigma_1(x),\qquad\sigma_i(x+1)\le a_i\,\sigma_i(x)\quad(i=1,2). $$
+Put $C=\max\{10+\varepsilon,(4+\varepsilon)a_1a_2\}$. Suppose that for every integer $N>N_0$ there
+is a non-zero $P_N\in\mathbb{Z}[X]$ with every coefficient of absolute value at most
+$e^{\sigma_1(N)}$, $\deg P_N\le\sigma_2(N)$ and $|P_N(\alpha)|<e^{-C\sigma_1(N)\sigma_2(N)}$. Then
+$\alpha$ is algebraic. -/
 theorem transcendence_criterion
     (α : ℂ) (ε : ℝ) (hε : 0 < ε)
     (σ₁ σ₂ : ℝ → ℝ) (hσ₁ : StrictMono σ₁) (hσ₂ : StrictMono σ₂)

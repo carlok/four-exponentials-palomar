@@ -1,21 +1,16 @@
 /-
-Mirrored from Prove2Me: `FourExp.trdeg_one_presentation`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.trdeg_one_presentation__9541d31c.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/trdeg_one_presentation.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.HermiteLindemann
 public import Diaz.Mirror.exists_monic_integral_model_presentation
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.RingTheory.AlgebraicIndependent.AlgebraicClosure
+public import Mathlib.Tactic.Convert
+public import Mathlib.Tactic.FinCases
+public import Mathlib.Tactic.NormNum
 
 /-!
 # The four exponentials data in transcendence degree one
@@ -27,7 +22,15 @@ algebraic over `ℚ(ω)`: an element transcendental over `ℚ[ω]` would form wi
 independent pair. The four exponentials `e^(xᵢ yⱼ)` are algebraic over `ℚ`, hence over `ℚ(ω)`.
 The eight numbers `xᵢ`, `yⱼ`, `e^(xᵢ yⱼ)` then have a common presentation
 `z · D(ω, ω₁) = E(ω, ω₁)` over one monic integral model `Q(ω, ω₁) = 0`.
+
+From `Diaz/Mirror/trdeg_one_presentation.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.trdeg_one_presentation`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 namespace TrdegOnePresentation
 
@@ -59,17 +62,29 @@ lemma isAlgebraic_of_trdeg_le_one (S : Set ℂ) (htr : Algebra.trdeg ℚ ↥(Alg
 end TrdegOnePresentation
 
 open TrdegOnePresentation in
+/-- **Presenting the field.** Let $x_1,x_2$ be linearly independent over $\mathbb{Q}$, and likewise
+$y_1,y_2$. If every $e^{x_iy_j}$ is algebraic and
+$\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}[x_1,x_2,y_1,y_2] \le1$, then $x_1,x_2,y_1,y_2$ have
+presentation data. -/
 theorem trdeg_one_presentation
     (x₁ x₂ y₁ y₂ : ℂ) (hx : LinearIndependent ℚ ![x₁, x₂]) (hy : LinearIndependent ℚ ![y₁, y₂])
     (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁, y₂] j)))
     (htr : Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ ({x₁, x₂, y₁, y₂} : Set ℂ)) ≤ 1) :
     ∃ ω ω₁ : ℂ, Transcendental ℚ ω ∧ ∃ Q : Polynomial (Polynomial ℤ),
-        Q.Monic ∧ 0 < Q.natDegree ∧ Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0 ∧
-        (∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0) ∧
-        ∃ (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 → Polynomial (Polynomial ℤ)),
-          Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0 ∧ (∀ i, ![x₁, x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i)) ∧
-          (∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j)) ∧
-          (∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j)) := by
+        Q.Monic ∧ 0 < Q.natDegree ∧ Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω)
+            ω₁ Q = 0 ∧
+        (∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+            Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0) ∧
+        ∃ (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 →
+            Fin 2 → Polynomial (Polynomial ℤ)),
+          Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0 ∧ (∀ i, ![x₁,
+              x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+                  Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i)) ∧
+          (∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D
+              = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j)) ∧
+          (∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) *
+              Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+                  Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j)) := by
   -- `ω = x₁ y₁` is transcendental, by Hermite–Lindemann
   have hx1 : x₁ ≠ 0 := by simpa using hx.ne_zero 0
   have hy1 : y₁ ≠ 0 := by simpa using hy.ne_zero 0
@@ -86,7 +101,8 @@ theorem trdeg_one_presentation
     rintro (i | j | p)
     · exact isAlgebraic_of_trdeg_le_one _ htr hωS (hS (![x₁, x₂] i) (by fin_cases i <;> simp)) hω
     · exact isAlgebraic_of_trdeg_le_one _ htr hωS (hS (![y₁, y₂] j) (by fin_cases j <;> simp)) hω
-    · exact IsAlgebraic.tower_top (L := IntermediateField.adjoin ℚ ({x₁ * y₁} : Set ℂ)) (hexp p.1 p.2)
+    · exact IsAlgebraic.tower_top (L := IntermediateField.adjoin ℚ ({x₁ *
+        y₁} : Set ℂ)) (hexp p.1 p.2)
   -- one integral model presents them all
   obtain ⟨ω₁, Q, hQm, hQd, hQroot, hQmin, D, E, hD, hE⟩ :=
     Transcendence.exists_monic_integral_model_presentation (x₁ * y₁) hω f hf

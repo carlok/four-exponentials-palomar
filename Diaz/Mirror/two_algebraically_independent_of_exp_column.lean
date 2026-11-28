@@ -1,24 +1,15 @@
 /-
-Mirrored from Prove2Me: `DiazModulus.two_algebraically_independent_of_exp_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/DiazModulus.two_algebraically_independent_of_exp_column__952ea261.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/two_algebraically_independent_of_exp_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.HermiteLindemann
 public import Diaz.Mirror.isAlgebraic_adjoin_of_not_algebraicIndependent_pair
-public import Diaz.Mirror.trdeg_adjoin_le_one_of_isAlgebraic_adjoin
 public import Diaz.Mirror.small_polynomials_of_column
 public import Diaz.Mirror.transcendence_criterion
-
-@[expose] public section
-
-namespace Diaz
+public import Diaz.Mirror.trdeg_adjoin_le_one_of_isAlgebraic_adjoin
+public import Mathlib.Tactic.Tauto
 
 /-!
 # Waldschmidt's theorem of 1973
@@ -39,8 +30,21 @@ Suppose that no two of the eight numbers `xᵢ`, `yⱼ`, `e^{xᵢyⱼ}` are alge
   too small at `ω`, and Gel'fond's criterion `transcendence_criterion` makes `ω` algebraic.
 
 No rank-one parametrization is needed: the hypothesis is already stated in `x`, `y` form.
+
+From `Diaz/Mirror/two_algebraically_independent_of_exp_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `DiazModulus.two_algebraically_independent_of_exp_column`.
 -/
 
+@[expose] public section
+
+namespace Diaz
+
+/-- **Waldschmidt 1973.** Let $x_1,x_2$ be complex numbers linearly independent over $\mathbb{Q}$,
+and $y_1,y_2$ complex numbers linearly independent over $\mathbb{Q}$. If $e^{x_1y_2}$ and
+$e^{x_2y_2}$ are algebraic, then two of the eight numbers
+$$ x_1,\ x_2,\ y_1,\ y_2,\ e^{x_1y_1},\ e^{x_1y_2},\ e^{x_2y_1},\ e^{x_2y_2} $$
+are algebraically independent over $\mathbb{Q}$. -/
 theorem two_algebraically_independent_of_exp_column :
     ∀ x₁ x₂ y₁ y₂ : ℂ, LinearIndependent ℚ ![x₁, x₂] → LinearIndependent ℚ ![y₁, y₂] →
       IsAlgebraic ℚ (Complex.exp (x₁ * y₂)) → IsAlgebraic ℚ (Complex.exp (x₂ * y₂)) →
@@ -72,7 +76,7 @@ theorem two_algebraically_independent_of_exp_column :
       Complex.exp (x₂ * y₁)} : Set ℂ)) ≤ 1 := by
     refine Transcendence.trdeg_adjoin_le_one_of_isAlgebraic_adjoin t _ fun s hs => halg s ?_
     simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hs ⊢
-    tauto
+    rcases hs with rfl | rfl | rfl | rfl | rfl | rfl <;> simp
   -- the analytic construction, and Gel'fond's criterion
   obtain ⟨ω, hω, σ₁, σ₂, hm₁, hm₂, ht₁, ht₂, a₁, a₂, ha₁, ha₂, h₂₁, hg₁, hg₂, hC⟩ :=
     small_polynomials_of_column x₁ x₂ y₁ y₂ hx hy h₁₂ h₂₂ htr

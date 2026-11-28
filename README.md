@@ -24,9 +24,8 @@ which is the canonical home of the proofs.
 
 - `Challenge.lean`: the statements, with deliberate `sorry`, importing Mathlib only.
 - `Solution.lean`: the same statements, proved by the library theorems.
-- `Diaz/`: the 69 library modules the proofs need, copied from diaz-modulus-lean at
-  `59d5a598c292` and changed only for the Lean module system (`module`, `public import`,
-  `@[expose] public section`). Paths and namespaces are the library's.
+- `Diaz/`: the library modules the proofs need, from diaz-modulus-lean at `465147a3ec8b`. Paths
+  and namespaces are the library's.
 - `comparator.json`, `formalization.yaml`: the Palomar submission metadata.
 
 ## Build
@@ -35,8 +34,26 @@ which is the canonical home of the proofs.
 lake exe cache get && lake build
 ```
 
-Lean 4.35.0, Mathlib v4.35.0. `scripts/verify-comparator.sh` runs the toolchain's
-`lake comparator` the way Palomar does.
+Lean 4.36.0, Mathlib v4.36.0, and [Tau Ceti](https://github.com/TauCetiProject/TauCeti) at
+`0642eae`. `scripts/verify-comparator.sh` runs the toolchain's `lake comparator` the way Palomar
+does.
+
+## Since the registered commit
+
+Palomar registered commit `adc5d6e` (Lean and Mathlib v4.35.0). The statements in
+`Challenge.lean` have not changed since. The later commits prepare the extract for
+[Lean Pool](https://github.com/LeanPool/lean-pool):
+
+- Lean and Mathlib v4.36.0, with Tau Ceti as a dependency. Hermite–Lindemann is Tau Ceti's
+  `transcendental_exp_of_isAlgebraic`, which replaces the port of the Lindemann–Weierstrass
+  development of Mathlib pull request #28013, and the Cauchy estimate with zeros is proved from
+  Tau Ceti's Schwarz lemma with prescribed zeros.
+- The ten library modules that the three theorems do not use are gone.
+- Each module imports only what it uses, instead of `import Mathlib`.
+- No proof raises a heartbeat limit, and the library builds with Mathlib's standard linters,
+  with warnings as errors.
+- Every module has a copyright header and a module docstring with the statement from the
+  library's blueprint, its source and references, and the provenance of the proof.
 
 ## Related
 

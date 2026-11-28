@@ -1,22 +1,19 @@
 /-
-Mirrored from Prove2Me: `FourExp.exists_iteratedDeriv_presentation`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.exists_iteratedDeriv_presentation__d4a43f2a.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_iteratedDeriv_presentation.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_int_pow_repr
 public import Diaz.Mirror.length_mul_le
 public import Diaz.Mirror.length_sum_le
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.FunProp
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.SplitIfs
 
 /-!
 # Integer presentations of the derivatives of the auxiliary exponential polynomial
@@ -39,9 +36,17 @@ Write `φ(P) = P(ω, ω₁)` for `P ∈ ℤ[X][Y]`, `δ = φ(D)`, `β = j x₁ +
   degrees in `X` and `Y` add up under products. The lengths of the `P_{ijk}` are at most
   `K^(4m+S) W^(4(N+1))` with `K = 2(1+m+S+T+a+b)c` and `W` depending only on the data, and their
   degrees at most `(2m+S)c + 4W`.
+
+From `Diaz/Mirror/exists_iteratedDeriv_presentation.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.exists_iteratedDeriv_presentation`.
 -/
 
-namespace S7W3_exists_iteratedDeriv_presentation
+@[expose] public section
+
+namespace Diaz
+
+namespace ExistsIteratedDerivPresentation
 
 open Polynomial
 
@@ -137,7 +142,8 @@ lemma sz_exists (P : ℤ[X][X]) : ∃ c, Sz P c c := by
   · rw [Polynomial.coeff_eq_zero_of_natDegree_lt (not_le.1 hr), Polynomial.natDegree_zero]
     exact Nat.zero_le _
 
-lemma sz_exists_fam {ι : Type*} [Fintype ι] (F : ι → ℤ[X][X]) : ∃ c, ∀ i, Sz (F i) c c := by
+lemma sz_exists_fam {ι : Type*} [Finite ι] (F : ι → ℤ[X][X]) : ∃ c, ∀ i, Sz (F i) c c := by
+  have := Fintype.ofFinite ι
   choose c hc using fun i => sz_exists (F i)
   have hle : ∀ i, c i ≤ ∑ i', c i' := fun i =>
     Finset.single_le_sum (f := c) (fun _ _ => Nat.zero_le _) (Finset.mem_univ i)
@@ -248,7 +254,8 @@ noncomputable def epart (ℓ : Fin 2 → Fin 2 → ℕ) (r : Fin 2 → Fin 2 →
     fac (ℓ 1 1) (r 1 1) (L 1 1) (H 1 1) Dp N (k * b)
 
 /-- The constant `Λ' = ∏_{p,q} δ^(ℓ_{pq}-1) L_{pq}^N`. -/
-noncomputable def exists_iteratedDeriv_presentation_lam (δ : ℂ) (ℓ : Fin 2 → Fin 2 → ℕ) (L : Fin 2 → Fin 2 → ℤ) (N : ℕ) : ℂ :=
+noncomputable def existsIteratedDerivPresentationLam (δ : ℂ) (ℓ : Fin 2 → Fin 2 → ℕ) (L : Fin 2 →
+    Fin 2 → ℤ) (N : ℕ) : ℂ :=
   δ ^ (ℓ 0 0 - 1) * (L 0 0 : ℂ) ^ N * (δ ^ (ℓ 0 1 - 1) * (L 0 1 : ℂ) ^ N) *
     (δ ^ (ℓ 1 0 - 1) * (L 1 0 : ℂ) ^ N) * (δ ^ (ℓ 1 1 - 1) * (L 1 1 : ℂ) ^ N)
 
@@ -258,7 +265,7 @@ lemma exp_split (x₁ x₂ y₁ y₂ : ℂ) (a b j k : ℕ) :
         Complex.exp (![x₁, x₂] 0 * ![y₁, y₂] 1) ^ (j * b) *
         Complex.exp (![x₁, x₂] 1 * ![y₁, y₂] 0) ^ (k * a) *
         Complex.exp (![x₁, x₂] 1 * ![y₁, y₂] 1) ^ (k * b) := by
-  show _ = Complex.exp (x₁ * y₁) ^ (j * a) * Complex.exp (x₁ * y₂) ^ (j * b) *
+  change _ = Complex.exp (x₁ * y₁) ^ (j * a) * Complex.exp (x₁ * y₂) ^ (j * b) *
     Complex.exp (x₂ * y₁) ^ (k * a) * Complex.exp (x₂ * y₂) ^ (k * b)
   rw [← Complex.exp_nat_mul, ← Complex.exp_nat_mul, ← Complex.exp_nat_mul, ← Complex.exp_nat_mul,
     ← Complex.exp_add, ← Complex.exp_add, ← Complex.exp_add]
@@ -272,12 +279,12 @@ lemma epart_eval (φ : ℤ[X][X] →+* ℂ) (x₁ x₂ y₁ y₂ : ℂ) (ℓ : F
     (hr : ∀ p q n, (L p q : ℂ) ^ n * Complex.exp (![x₁, x₂] p * ![y₁, y₂] q) ^ n =
       ∑ t ∈ Finset.range (ℓ p q), (r p q n t : ℂ) * Complex.exp (![x₁, x₂] p * ![y₁, y₂] q) ^ t)
     {N a b j k : ℕ} (h1 : j * a ≤ N) (h2 : j * b ≤ N) (h3 : k * a ≤ N) (h4 : k * b ≤ N) :
-    φ (epart ℓ r L H Dp N a b j k) = exists_iteratedDeriv_presentation_lam (φ Dp) ℓ L N *
+    φ (epart ℓ r L H Dp N a b j k) = existsIteratedDerivPresentationLam (φ Dp) ℓ L N *
       Complex.exp (((j : ℂ) * x₁ + (k : ℂ) * x₂) * ((a : ℂ) * y₁ + (b : ℂ) * y₂)) := by
   rw [epart, map_mul φ, map_mul φ, map_mul φ,
     fac_eval φ _ _ _ _ _ (hH 0 0) (hr 0 0) h1, fac_eval φ _ _ _ _ _ (hH 0 1) (hr 0 1) h2,
     fac_eval φ _ _ _ _ _ (hH 1 0) (hr 1 0) h3, fac_eval φ _ _ _ _ _ (hH 1 1) (hr 1 1) h4,
-    exp_split x₁ x₂ y₁ y₂ a b j k, exists_iteratedDeriv_presentation_lam]
+    exp_split x₁ x₂ y₁ y₂ a b j k, existsIteratedDerivPresentationLam]
   ring
 
 lemma sz_epart (ℓ : Fin 2 → Fin 2 → ℕ) (r : Fin 2 → Fin 2 → ℕ → ℕ → ℤ) (L : Fin 2 → Fin 2 → ℤ)
@@ -294,7 +301,7 @@ lemma sz_epart (ℓ : Fin 2 → Fin 2 → ℕ) (r : Fin 2 → Fin 2 → ℕ → 
     (le_of_eq (by ring)) (by omega)
 
 lemma lam_ne_zero {δ : ℂ} (hδ : δ ≠ 0) (ℓ : Fin 2 → Fin 2 → ℕ) {L : Fin 2 → Fin 2 → ℤ}
-    (hL : ∀ p q, L p q ≠ 0) (N : ℕ) : exists_iteratedDeriv_presentation_lam δ ℓ L N ≠ 0 := by
+    (hL : ∀ p q, L p q ≠ 0) (N : ℕ) : existsIteratedDerivPresentationLam δ ℓ L N ≠ 0 := by
   have hf : ∀ p q, δ ^ (ℓ p q - 1) * (L p q : ℂ) ^ N ≠ 0 := fun p q =>
     mul_ne_zero (pow_ne_zero _ hδ) (pow_ne_zero _ (Int.cast_ne_zero.2 (hL p q)))
   exact mul_ne_zero (mul_ne_zero (mul_ne_zero (hf 0 0) (hf 0 1)) (hf 1 0)) (hf 1 1)
@@ -310,7 +317,7 @@ lemma norm_pow_le_pow {x : ℂ} {C : ℝ} (hx : ‖x‖ ≤ C) (n : ℕ) : ‖x 
 
 lemma norm_lam_le {δ : ℂ} {C : ℝ} (hδ : ‖δ‖ ≤ C) (ℓ : Fin 2 → Fin 2 → ℕ)
     {L : Fin 2 → Fin 2 → ℤ} (hL : ∀ p q, ‖(L p q : ℂ)‖ ≤ C) (N : ℕ) :
-    ‖exists_iteratedDeriv_presentation_lam δ ℓ L N‖ ≤
+    ‖existsIteratedDerivPresentationLam δ ℓ L N‖ ≤
       C ^ (ℓ 0 0 - 1 + N + (ℓ 0 1 - 1 + N) + (ℓ 1 0 - 1 + N) + (ℓ 1 1 - 1 + N)) := by
   have hf : ∀ p q, ‖δ ^ (ℓ p q - 1) * (L p q : ℂ) ^ N‖ ≤ C ^ (ℓ p q - 1 + N) := fun p q =>
     norm_mul_le_pow (norm_pow_le_pow hδ _) (norm_pow_le_pow (hL p q) N)
@@ -493,7 +500,8 @@ theorem exists_iteratedDeriv_presentation_main (x₁ x₂ y₁ y₂ : ℂ)
     have e3 : 2 * c₀ * (m + S) ≤ c * (m + S) := Nat.mul_le_mul_right (m + S) (by omega)
     have e4 : c * (1 + m + S) = c + c * (m + S) := by ring
     omega
-  refine ⟨φ D ^ (m + S) * exists_iteratedDeriv_presentation_lam (φ D) ℓ L N, mul_ne_zero (pow_ne_zero _ hD) (lam_ne_zero hD ℓ hL N),
+  refine ⟨φ D ^ (m + S) * existsIteratedDerivPresentationLam (φ D) ℓ L N,
+      mul_ne_zero (pow_ne_zero _ hD) (lam_ne_zero hD ℓ hL N),
     ?_, fun i j k => Ppol ℓ r L D E G H S a b m N i j k, fun i j k => ?_,
     fun i j k r' => ((hsz i j k).2.1 r').trans hdeg, fun i j k => (hsz i j k).2.2.trans hdeg,
     fun f => ?_⟩
@@ -540,10 +548,22 @@ theorem exists_iteratedDeriv_presentation_main (x₁ x₂ y₁ y₂ : ℂ)
       (epart_eval φ x₁ x₂ y₁ y₂ ℓ r L H D hH hr1 (hja j) (hjb j) (hja k) (hjb k)) i.2]
     exact mul_left_comm _ _ _
 
-end S7W3_exists_iteratedDeriv_presentation
+end ExistsIteratedDerivPresentation
 
-open S7W3_exists_iteratedDeriv_presentation
+open ExistsIteratedDerivPresentation
 
+/-- **Derivatives at a grid point, presented.** Let $x_1,x_2,y_1,y_2\in\mathbb{C}$ with every
+$e^{x_iy_j}$ algebraic. Let $\omega,\omega_1\in\mathbb{C}$, let $\varphi$ be evaluation at
+$(\omega,\omega_1)$, and let $D,E_i,G_j,H_{ij}\in\mathbb{Z}[X][Y]$ with $\varphi(D)\neq0$,
+$x_i\varphi(D)=\varphi(E_i)$, $y_j\varphi(D)=\varphi(G_j)$ and
+$e^{x_iy_j}\varphi(D)=\varphi(H_{ij})$. There is $c\in\mathbb{N}$ such that for all
+$S,T,a,b,m\in\mathbb{N}$ there are $\Lambda\in\mathbb{C}$, $\Lambda\neq0$, with $|\Lambda|\le
+c^{\,c(1+m+S+T(a+b))}$, and $P_{ijh}\in\mathbb{Z}[X][Y]$ ($i<S$, $j,h<T$) of degree at most
+$c(1+m+S)$ in $X$ and in $Y$ and of length at most
+$$ c^{\,c(1+m+S+T(a+b))}\,(1+m+S+T+a+b)^{c(1+m+S)}, $$
+such that for all $f_{ijh}\in\mathbb{C}$
+$$ \Lambda \cdot\frac{d^{m}}{dz^{m}}\Bigl(\sum_{i,j,h}f_{ijh}\,z^{i}e^{(jx_1+hx_2)z}\Bigr) \Big|_{z
+=ay_1+by_2} =\sum_{i,j,h}f_{ijh}\,\varphi(P_{ijh}). $$ -/
 theorem exists_iteratedDeriv_presentation
     (x₁ x₂ y₁ y₂ : ℂ)
     (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁, y₂] j)))
@@ -569,7 +589,8 @@ theorem exists_iteratedDeriv_presentation
               f i j k * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * z))
             ((a : ℂ) * y₁ + (b : ℂ) * y₂) =
           ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T,
-            f i j k * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (P i j k) := by
+            f i j k * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (P i j k)
+                := by
   exact exists_iteratedDeriv_presentation_main x₁ x₂ y₁ y₂ hexp
     (Polynomial.eval₂RingHom (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁) D E G H hD hE hG hH
 

@@ -1,21 +1,12 @@
 /-
-Mirrored from Prove2Me: `FourExp.auxiliary_function_alg_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.auxiliary_function_alg_column__e1f444e1.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/auxiliary_function_alg_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.aux_linear_system_column
 public import Diaz.Mirror.siegel_aux
-
-@[expose] public section
-
-namespace Diaz
 
 /-!
 # Siegel's auxiliary function, in the column case
@@ -30,12 +21,27 @@ As in `auxiliary_function_alg`, in two steps.
   non-zero coefficient `c_{ijk} = ∑ q_{ijkμν} ω^μ ω₁^ν`, and bounds `q` and `c` by
   `e^(κ N² √(log N))` with `κ ≥ κ₁`.
 
-Taking `N₀` past both thresholds, the auxiliary_function_alg_column `q` gives the auxiliary function.
+Taking `N₀` past both thresholds, the auxiliary_function_alg_column `q` gives the auxiliary
+function.
+
+From `Diaz/Mirror/auxiliary_function_alg_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.auxiliary_function_alg_column`.
 -/
 
+@[expose] public section
+
+namespace Diaz
+
+/-- **The auxiliary function, one algebraic column.** Let
+$x_1,x_2,y_1,y_2,\omega,\omega_1\in\mathbb{C}$ and $Q\in\mathbb{Z}[X][Y]$ with $d=\deg_YQ\ge1$, such
+that no non-zero $A\in\mathbb{Z}[X][Y]$ with $\deg_YA<d$ vanishes at $(\omega,\omega_1)$, and
+suppose that the derivatives of the functions $F_q$ have reduced presentations as in the conclusion
+of Lemma . Then the conclusion of Lemma holds. -/
 theorem auxiliary_function_alg_column
     (x₁ x₂ y₁ y₂ : ℂ) (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQd : 0 < Q.natDegree)
-    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
+    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
     (hpres : ∃ c : ℕ, ∀ S T M a b m : ℕ, ∃ Λ : ℂ, Λ ≠ 0 ∧
       ‖Λ‖ ≤ (c : ℝ) ^ (c * (1 + m + S + T * (a + b))) ∧
       ∃ R : Fin S → Fin T → Fin T → Fin M → Fin Q.natDegree → Polynomial (Polynomial ℤ),
@@ -55,13 +61,22 @@ theorem auxiliary_function_alg_column
               Polynomial.C (Polynomial.C (q i j k μ ν)) * R i j k μ ν)) :
     ∃ κ : ℝ, 0 < κ ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
       ∃ M : ℕ, (M : ℝ) ≤ κ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ ∧
-      ∃ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-        (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-        (∃ i j k', (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' ≠ 0) ∧
-        (∀ i j k', ‖(fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k'‖ ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-        (∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
-          iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0) := by
+      ∃ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M →
+          Fin Q.natDegree → ℤ,
+        (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 *
+            Real.sqrt (Real.log (N : ℝ))))) ∧
+        (∃ i j k', (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+            ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' ≠ 0) ∧
+        (∀ i j k', ‖(fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+            ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k'‖ ≤ Real.exp (κ * ((N : ℝ) ^ 2 *
+                Real.sqrt (Real.log (N : ℝ))))) ∧
+        (∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) *
+            Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
+          iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+              ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0) := by
   -- the linear system, from the reduced presentation
   obtain ⟨κ₁, hκ₁, N₁, hsys⟩ := aux_linear_system_column x₁ x₂ y₁ y₂ ω ω₁ Q hpres
   -- Siegel's lemma solves it

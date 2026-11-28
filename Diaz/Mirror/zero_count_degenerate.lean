@@ -1,18 +1,35 @@
 /-
-Mirrored from Prove2Me: `FourExp.zero_count_degenerate`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.zero_count_degenerate__2e96f6c1.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/zero_count_degenerate.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Analysis.Analytic.Order
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Calculus.Deriv.Polynomial
+public import Mathlib.Analysis.Complex.CauchyIntegral
+public import Mathlib.RingTheory.SimpleRing.Principal
+public import Mathlib.Tactic.Ring
+
+/-!
+# The degenerate cases
+
+Let $f$, $n$ and $\Omega$ be as in Lemma , without the hypothesis $\Omega>0$, and suppose that
+$n\le1$ or $\Omega=0$. Then for every finite set $S\subset\mathbb{C}$
+$$ \sum_{z\in S}\operatorname{ord}_zf\le n-1. $$
+
+Source: Elementary; the degenerate cases of [Wal71, §4, Lemme 3].
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/zero_count_degenerate.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.zero_count_degenerate`.
+-/
 
 @[expose] public section
 
@@ -62,11 +79,15 @@ theorem sum_order_le (P : ℂ[X]) (hP : P ≠ 0) (c : ℂ) (S : Finset ℂ) :
 
 end FourExpDeg
 
+/-- **The degenerate cases.** Let $f$, $n$ and $\Omega$ be as in Lemma , without the hypothesis
+$\Omega>0$, and suppose that $n\le1$ or $\Omega=0$. Then for every finite set $S\subset\mathbb{C}$
+$$ \sum_{z\in S}\operatorname{ord}_zf\le n-1. $$ -/
 theorem zero_count_degenerate
     {l : ℕ} (q : Fin l → ℕ) (ω : Fin l → ℂ) (hω : Function.Injective ω)
     (b : (j : Fin l) → Fin (q j) → ℂ) (hb : ∃ j i, b j i ≠ 0)
     (S : Finset ℂ) (hdeg : (∑ j, q j) ≤ 1 ∨ (⨆ j, ‖ω j‖) = 0) :
-    (∑ z ∈ S, analyticOrderNatAt (fun w : ℂ => ∑ j, ∑ i : Fin (q j), b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z) + 1 ≤ ∑ j, q j := by
+    (∑ z ∈ S, analyticOrderNatAt (fun w : ℂ => ∑ j, ∑ i : Fin (q j),
+        b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z) + 1 ≤ ∑ j, q j := by
   classical
   obtain ⟨j₀, i₀, hb₀⟩ := hb
   -- every other block is empty
@@ -95,12 +116,13 @@ theorem zero_count_degenerate
         have hi : (i : ℕ) < q j := i.isLt
         have hq := hsingle j hj
         omega)) (by simp)]
-    simp only [P, eval_finset_sum, eval_mul, eval_C, eval_pow, eval_X, Finset.sum_mul]
+    simp only [P, eval_finsetSum, eval_mul, eval_C, eval_pow, eval_X, Finset.sum_mul]
   have hP : P ≠ 0 := by
     intro h0
     have hc := congrArg (fun p => p.coeff (i₀ : ℕ)) h0
-    simp only [P, finset_sum_coeff, coeff_C_mul_X_pow, coeff_zero] at hc
-    rw [Finset.sum_eq_single i₀ (fun k _ hk => ite_eq_right (fun h => hk (Fin.ext h).symm)) (by simp)] at hc
+    simp only [P, finsetSum_coeff, coeff_C_mul_X_pow, coeff_zero] at hc
+    rw [Finset.sum_eq_single i₀ (fun k _ hk => ite_eq_right (fun h => hk (Fin.ext h).symm)) (by
+        simp)] at hc
     simp only [ite_true] at hc
     exact hb₀ hc
   have hdegP : P.natDegree + 1 ≤ q j₀ := by

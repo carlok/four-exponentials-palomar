@@ -1,20 +1,16 @@
 /-
-Mirrored from Prove2Me: `Transcendence.exists_monic_integral_model_presentation`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.exists_monic_integral_model_presentation__7878bb56.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_monic_integral_model_presentation.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_monic_integral_model
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.FieldTheory.PrimitiveElement
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # A common presentation over one monic integral model
@@ -26,9 +22,17 @@ root of a polynomial `Q ∈ ℤ[X][Y]` monic in `Y` and minimal at `(ω, ω₁)`
 closed under sums and products; every element of `ℚ(ω)` is presentable, as `r(ω) / s(ω)` with
 `r, s ∈ ℤ[X]`, and so is `θ = ω₁ / v(ω)`. Hence every `zᵢ = pᵢ(θ)` is presentable, and a product of
 denominators serves all the `zᵢ` at once.
+
+From `Diaz/Mirror/exists_monic_integral_model_presentation.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.exists_monic_integral_model_presentation`.
 -/
 
-namespace S7W4_exists_monic_integral_model_presentation
+@[expose] public section
+
+namespace Transcendence
+
+namespace ExistsMonicIntegralModelPresentation
 
 open Polynomial
 
@@ -64,11 +68,12 @@ lemma presentable_pow {ω ω₁ θ : ℂ} (hθ : Presentable ω ω₁ θ) (n : �
   | zero => exact ⟨1, 1, by simp, by simp⟩
   | succ n ih => rw [pow_succ]; exact presentable_mul ih hθ
 
-lemma common_denominator {ω ω₁ : ℂ} {ι : Type*} [Fintype ι] (f : ι → ℂ)
+lemma common_denominator {ω ω₁ : ℂ} {ι : Type*} [Finite ι] (f : ι → ℂ)
     (h : ∀ i, Presentable ω ω₁ (f i)) :
     ∃ D : Polynomial (Polynomial ℤ), evH ω ω₁ D ≠ 0 ∧
       ∀ i, ∃ E : Polynomial (Polynomial ℤ), f i * evH ω ω₁ D = evH ω ω₁ E := by
   classical
+  have := Fintype.ofFinite ι
   choose D E hD hE using h
   refine ⟨∏ i, D i, ?_, fun i => ⟨E i * ∏ j ∈ Finset.univ.erase i, D j, ?_⟩⟩
   · rw [map_prod (evH ω ω₁)]
@@ -82,7 +87,7 @@ lemma exists_monic_integral_model_presentation_exists_int_scaled (p : ℚ[X]) :
     ∃ b : ℤ, b ≠ 0 ∧ ∃ q : ℤ[X], q.map (Int.castRingHom ℚ) = C (b : ℚ) * p := by
   obtain ⟨b, hb, h⟩ := IsLocalization.integerNormalization_spec (nonZeroDivisors ℤ) p
   refine ⟨b, nonZeroDivisors.ne_zero hb, IsLocalization.integerNormalization (nonZeroDivisors ℤ) p,
-    Polynomial.ext fun i => ?_⟩
+    AddMonoidAlgebra.ext (Finsupp.ext fun i => ?_)⟩
   simpa [coeff_map, coeff_C_mul, algebraMap_int_eq] using congrArg (fun q => q.coeff i) h
 
 lemma evH_C (ω ω₁ : ℂ) (q : ℤ[X]) :
@@ -145,9 +150,15 @@ lemma exists_primitive (F : IntermediateField ℚ ℂ) (S : Finset ℂ) (hS : �
   have := congrArg E.val hp
   simpa [Polynomial.aeval_algHom_apply] using this
 
-end S7W4_exists_monic_integral_model_presentation
+end ExistsMonicIntegralModelPresentation
 
-open Polynomial S7W4_exists_monic_integral_model_presentation in
+open Polynomial ExistsMonicIntegralModelPresentation in
+/-- **One model for finitely many numbers.** Let $\omega\in\mathbb{C}$ be transcendental and let
+$(z_i)_{i\in I}$ be a finite family of complex numbers algebraic over $\mathbb{Q}(\omega)$. There
+are $\omega_1\in\mathbb{C}$ and $Q\in\mathbb{Z}[X][Y]$, monic in $Y$ of degree $d\ge1$, with
+$Q(\omega,\omega_1)=0$ and minimal there in the sense of Lemma , and $D,E_i\in\mathbb{Z}[X][Y]$ with
+$D(\omega,\omega_1)\neq0$ and
+$$ z_i\,D(\omega,\omega_1)=E_i(\omega,\omega_1)\qquad\text{for every }i. $$ -/
 theorem exists_monic_integral_model_presentation (ω : ℂ) (hω : Transcendental ℚ ω)
     {ι : Type*} [Finite ι] (z : ι → ℂ)
     (hz : ∀ i, IsAlgebraic (IntermediateField.adjoin ℚ ({ω} : Set ℂ)) (z i)) :

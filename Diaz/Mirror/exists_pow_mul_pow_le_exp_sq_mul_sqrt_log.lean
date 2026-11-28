@@ -1,21 +1,43 @@
 /-
-Mirrored from Prove2Me: `FourExp.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log__577d8faf.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_pow_mul_pow_le_exp_sq_mul_sqrt_log.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+
+/-!
+# The size estimate
+
+For all $c,r\in\mathbb{N}$ there is $\kappa>0$ such that for all integers $N\ge3$ and
+$S,T,a,b,m\in\mathbb{N}$ with
+$$ S\le\frac{N^{2}}{\sqrt{\log N}},\quad m\le S,\quad T\le rN,\quad a\le r\frac{N}{\sqrt{\log
+N}},\quad b\le rN\sqrt{\log N}, $$
+one has
+$$ c^{\,c(1+m+S+T(a+b))}(1+m+S+T+a+b)^{c(1+m+S)}\le e^{\kappa N^{2}\sqrt{\log N}}. $$
+
+Source: The parameter estimates in the proofs of [Wal73, Lemmes 4 and 7].
+
+## References
+
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/exists_pow_mul_pow_le_exp_sq_mul_sqrt_log.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log`.
+-/
 
 @[expose] public section
 
 namespace Diaz
 
-namespace S7W3_exists_pow_mul_pow_le_exp_sq_mul_sqrt_log
+namespace ExistsPowMulPowLeExpSqMulSqrtLog
 
 /-- `log x ≥ 1` for `x ≥ 3`, since `e < 3`. -/
 lemma one_le_log_of_three_le {x : ℝ} (hx : 3 ≤ x) : 1 ≤ Real.log x :=
@@ -28,7 +50,8 @@ lemma one_le_log_of_three_le {x : ℝ} (hx : 3 ≤ x) : 1 ≤ Real.log x :=
 `log (1 + m + S + T + a + b) ≤ log (3 + 3 r) + 2 s²`, and the logarithm
 `c (1 + m + S + T (a + b)) log c + c (1 + m + S) log (1 + m + S + T + a + b)` of the size bound
 is at most `(c (3 + 2 r²) log c + 3 c (log (3 + 3 r) + 2)) n² s`. -/
-lemma exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le (c r n s S T a b m : ℝ) (hc : 1 ≤ c) (hr : 0 ≤ r) (hn : 1 ≤ n)
+lemma exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le (c r n s S T a b m : ℝ) (hc : 1 ≤
+    c) (hr : 0 ≤ r) (hn : 1 ≤ n)
     (hs : 1 ≤ s) (hss : s * s = Real.log n) (hsn : s ≤ n)
     (hS0 : 0 ≤ S) (hT0 : 0 ≤ T) (ha0 : 0 ≤ a) (hb0 : 0 ≤ b) (hm0 : 0 ≤ m)
     (hS : S * s ≤ n ^ 2) (hmS : m ≤ S) (hT : T ≤ r * n) (ha : a * s ≤ r * n)
@@ -78,12 +101,13 @@ lemma exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le (c r n s S T a b m :
     mul_le_mul_of_nonneg_left hZP (mul_nonneg hc0 hlr),
     mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right hZs hs0) hc0]
 
-end S7W3_exists_pow_mul_pow_le_exp_sq_mul_sqrt_log
+end ExistsPowMulPowLeExpSqMulSqrtLog
 
-open S7W3_exists_pow_mul_pow_le_exp_sq_mul_sqrt_log in
+open ExistsPowMulPowLeExpSqMulSqrtLog in
 /-- The size bound at the scale `N² √(log N)`. For `c = 0` the left side is `1`. For `c ≥ 1`
 write it as `exp (c (1 + m + S + T (a + b)) log c + c (1 + m + S) log (1 + m + S + T + a + b))`
-and apply `exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le` with `s = √(log N)`, which satisfies `1 ≤ s`, `s² = log N` and
+and apply `exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le` with `s = √(log N)`, which
+satisfies `1 ≤ s`, `s² = log N` and
 `s ≤ log N ≤ N`; the exponent `κ` is `c (3 + 2 r²) log c + 3 c (log (3 + 3 r) + 2) + 1`. -/
 theorem exists_pow_mul_pow_le_exp_sq_mul_sqrt_log (c r : ℕ) :
     ∃ κ : ℝ, 0 < κ ∧ ∀ N S T a b m : ℕ, 3 ≤ N →
@@ -122,7 +146,8 @@ theorem exists_pow_mul_pow_le_exp_sq_mul_sqrt_log (c r : ℕ) :
   rw [← mul_div_assoc, le_div_iff₀ hs0] at ha
   have hT' : (T : ℝ) ≤ r * N := by exact_mod_cast hT
   have hmS' : (m : ℝ) ≤ S := by exact_mod_cast hmS
-  have key := exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le (c : ℝ) r N s S T a b m hc1 hr0 (by linarith) hs1 hss hsn
+  have key := exists_pow_mul_pow_le_exp_sq_mul_sqrt_log_exponent_le (c : ℝ) r N s S T a b m hc1 hr0
+      (by linarith) hs1 hss hsn
     (Nat.cast_nonneg _) (Nat.cast_nonneg _) (Nat.cast_nonneg _) (Nat.cast_nonneg _)
     (Nat.cast_nonneg _) hS hmS' hT' ha hb
   -- the left side as an exponential

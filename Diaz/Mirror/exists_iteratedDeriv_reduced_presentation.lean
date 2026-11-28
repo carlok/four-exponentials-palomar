@@ -1,24 +1,49 @@
 /-
-Mirrored from Prove2Me: `FourExp.exists_iteratedDeriv_reduced_presentation`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.exists_iteratedDeriv_reduced_presentation__75924281.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_iteratedDeriv_reduced_presentation.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_iteratedDeriv_presentation
 public import Diaz.Mirror.exists_modByMonic_length_le
-public import Diaz.Mirror.length_mul_le
+public import Mathlib.Algebra.AffineMonoid.UniqueSums
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+public import Mathlib.Tactic.SplitIfs
+
+/-!
+# Reduced presentations
+
+In the setting of Lemma , let moreover $Q\in\mathbb{Z}[X][Y]$ be monic in $Y$ with $\varphi(Q)=0$.
+There is $c\in\mathbb{N}$ such that for all $S,T,M,a,b,m\in\mathbb{N}$ there are $\Lambda\neq0$ with
+$|\Lambda|\le c^{\,c(1+m+S+T(a+b))}$ and $R_{ijh\mu\nu}\in\mathbb{Z}[X][Y]$ ($i<S$, $j,h<T$,
+$\mu<M$, $\nu<\deg_YQ$) of $Y$-degree less than $\deg_YQ$ and $X$-degree at most $M+c(1+m+S)$, and
+of length at most
+$$ c^{\,c(1+m+S+T(a+b))}\,(1+m+S+T+a+b)^{c(1+m+S)}, $$
+such that for every integer array $q$
+$$ \Lambda\,F_q^{(m)}(ay_1+by_2)
+=\varphi\Bigl(\sum_{i,j,h,\mu,\nu}q(i,j,h,\mu,\nu)\,R_{ijh\mu\nu}\Bigr), $$
+where $F_q$ is formed with $T$ in place of $2N$.
+
+Source: A step of the proofs of [Wal73, Lemmes 4 and 7].
+
+## References
+
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/exists_iteratedDeriv_reduced_presentation.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.exists_iteratedDeriv_reduced_presentation`.
+-/
 
 @[expose] public section
 
 namespace Diaz
 
-namespace S7W3_exists_iteratedDeriv_reduced_presentation
+namespace ExistsIteratedDerivReducedPresentation
 
 open Polynomial
 
@@ -54,9 +79,9 @@ lemma monomial_mul_degrees (P : ℤ[X][X]) (μ ν : ℕ) {e n : ℕ}
           · exact natDegree_X_pow_le ν
       _ = ν + n := by ring
 
-end S7W3_exists_iteratedDeriv_reduced_presentation
+end ExistsIteratedDerivReducedPresentation
 
-open Polynomial S7W3_exists_iteratedDeriv_reduced_presentation in
+open Polynomial ExistsIteratedDerivReducedPresentation in
 /-- Write `φ(P) = P(ω, ω₁)`. Take `R_{ijkμν} = (X^μ Y^ν P_{ijk}) mod Q`, where `P_{ijk}` and `Λ`
 come from the presentation of the derivatives with coefficients `f_{ijk} = ∑ q_{ijkμν} ω^μ ω₁^ν`.
 Since `φ(Q) = 0`, `φ(R_{ijkμν}) = ω^μ ω₁^ν φ(P_{ijk})`, which gives the identity after summing

@@ -1,22 +1,21 @@
 /-
-Mirrored from Prove2Me: `FourExp.construction_growth`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.construction_growth__d681b71a.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/construction_growth.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Analysis.SpecialFunctions.Log.Monotone
+public import Mathlib.Order.Filter.Defs
+public import Mathlib.Order.Monotone.Union
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.SplitIfs
 
 /-!
 # Growth of the construction's scales
@@ -35,11 +34,19 @@ same with `9 / √(log 3)` and `x² / √(log x)`. The statement is about `k A` 
   Across `3`, `(x + 1)² √(log (x + 1)) ≤ 16 · 1.5` and `(x + 1)² / √(log (x + 1)) ≤ 16 / √(log 3)`.
   Past `3`, for `A` compare squares, with `log (x + 1) ≤ 2 log x` and `x + 1 ≤ 4x/3`; for `B`, use
   `(x + 1)² ≤ 3 x²` and that `√(log x)` increases.
+
+From `Diaz/Mirror/construction_growth.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.construction_growth`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 open Filter Topology
 
-namespace W5_construction_growth
+namespace ConstructionGrowth
 
 /-- The growing majorant of the construction. -/
 noncomputable def A (x : ℝ) : ℝ :=
@@ -170,17 +177,30 @@ lemma B_step (x : ℝ) (hx : 0 < x) : B (x + 1) ≤ 3 * B x := by
       _ ≤ 3 * x ^ 2 / Real.sqrt (Real.log x) := by gcongr
       _ = 3 * (x ^ 2 / Real.sqrt (Real.log x)) := by ring
 
-end W5_construction_growth
+end ConstructionGrowth
 
-open W5_construction_growth in
+open ConstructionGrowth in
+/-- **The growth functions.** For every $k>0$ the growth functions $\sigma_1,\sigma_2$ are strictly
+increasing and tend to $+\infty$, and for every $x>0$
+$$ \sigma_2(x) \le\sigma_1(x), \qquad\sigma_i(x+1) \le3\,\sigma_i(x)\quad(i =1,2). $$ -/
 theorem construction_growth (k : ℝ) (hk : 0 < k) :
-    StrictMono (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 * Real.sqrt (Real.log x))) ∧
-    StrictMono (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 / Real.sqrt (Real.log x))) ∧
-    Tendsto (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 * Real.sqrt (Real.log x))) atTop atTop ∧
-    Tendsto (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 / Real.sqrt (Real.log x))) atTop atTop ∧
-    (∀ x : ℝ, 0 < x → k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 / Real.sqrt (Real.log x)) ≤ k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 * Real.sqrt (Real.log x))) ∧
-    (∀ x : ℝ, 0 < x → k * (if (x + 1) ≤ 3 then (x + 1) - 3 + 9 * Real.sqrt (Real.log 3) else (x + 1) ^ 2 * Real.sqrt (Real.log (x + 1))) ≤ 3 * (k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 * Real.sqrt (Real.log x)))) ∧
-    (∀ x : ℝ, 0 < x → k * (if (x + 1) ≤ 3 then (x + 1) - 3 + 9 / Real.sqrt (Real.log 3) else (x + 1) ^ 2 / Real.sqrt (Real.log (x + 1))) ≤ 3 * (k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 / Real.sqrt (Real.log x)))) := by
+    StrictMono (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 *
+        Real.sqrt (Real.log x))) ∧
+    StrictMono (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 /
+        Real.sqrt (Real.log x))) ∧
+    Tendsto (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 *
+        Real.sqrt (Real.log x))) atTop atTop ∧
+    Tendsto (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 /
+        Real.sqrt (Real.log x))) atTop atTop ∧
+    (∀ x : ℝ, 0 < x → k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 /
+        Real.sqrt (Real.log x)) ≤ k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 *
+            Real.sqrt (Real.log x))) ∧
+    (∀ x : ℝ, 0 < x → k * (if (x + 1) ≤ 3 then (x + 1) - 3 + 9 * Real.sqrt (Real.log 3) else (x +
+        1) ^ 2 * Real.sqrt (Real.log (x + 1))) ≤ 3 * (k * (if x ≤ 3 then x - 3 + 9 *
+            Real.sqrt (Real.log 3) else x ^ 2 * Real.sqrt (Real.log x)))) ∧
+    (∀ x : ℝ, 0 < x → k * (if (x + 1) ≤ 3 then (x + 1) - 3 + 9 / Real.sqrt (Real.log 3) else (x +
+        1) ^ 2 / Real.sqrt (Real.log (x + 1))) ≤ 3 * (k * (if x ≤ 3 then x - 3 + 9 /
+            Real.sqrt (Real.log 3) else x ^ 2 / Real.sqrt (Real.log x)))) := by
   refine ⟨fun x y h => mul_lt_mul_of_pos_left (strictMono_A h) hk,
     fun x y h => mul_lt_mul_of_pos_left (strictMono_B h) hk,
     Filter.Tendsto.const_mul_atTop hk tendsto_A,

@@ -1,20 +1,17 @@
 /-
-Mirrored from Prove2Me: `FourExp.small_irreducible_factor`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.small_irreducible_factor__5b3d2c39.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/small_irreducible_factor.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_irreducible_factor_cofactor_bound
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # A small irreducible factor (Gel'fond's lemma)
@@ -30,12 +27,26 @@ Put `L = log H`, `a = log M(Q) ≥ 0` and `b = log M(R) ≥ 0`. From
 `e log |Q(α)| < -λ n L - log |R(α)| ≤ -(λ - 5) n L`. For the coefficients,
 `|Q_i| ≤ C(δ, i) M(Q) ≤ 2^δ M(Q)` and `e (δ log 2 + a) ≤ e δ + d + L ≤ 2n + L`. Finally
 `e δ ≤ d ≤ n`. The multiplicity `e` is the `s` of the statement.
+
+From `Diaz/Mirror/small_irreducible_factor.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.small_irreducible_factor`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 open Polynomial
 
+/-- **Gel'fond's lemma.** Let $\alpha\in\mathbb{C}$ be transcendental and let $P\in\mathbb{Z}[X]$ be
+primitive, with every coefficient of absolute value at most $H$. Let $n,\lambda\in\mathbb{R}$ with
+$\deg P\le n\le\log H$ and $\lambda>6$. If $|P(\alpha)|<H^{-\lambda n}$, then there are a primitive
+irreducible divisor $Q$ of $P$ and an integer $s\ge1$ with
+$$ |Q(\alpha)|<H^{-(\lambda-6)n/s},\qquad\deg Q\le n/s, $$
+and every coefficient of $Q$ of absolute value at most $H^{1/s}e^{2n/s}$. -/
 theorem small_irreducible_factor
-    (α : ℂ) (hα : Transcendental ℚ α) (P : Polynomial ℤ) (hprim : P.IsPrimitive)
+    (α : ℂ) (_hα : Transcendental ℚ α) (P : Polynomial ℤ) (hprim : P.IsPrimitive)
     (H n lam : ℝ) (hPH : ∀ i : ℕ, |(P.coeff i : ℝ)| ≤ H)
     (hlog : n ≤ Real.log H) (hdeg : (P.natDegree : ℝ) ≤ n) (hlam : 6 < lam)
     (hsmall : ‖Polynomial.aeval α P‖ < H ^ (-(lam * n))) :
@@ -75,7 +86,8 @@ theorem small_irreducible_factor
   have hMR1 : 1 ≤ MR := one_le_mahlerMeasure_of_ne_zero hR0
   have hB : MQ ^ e * MR ≤ Real.exp P.natDegree * H := by
     have heq : (P.map (Int.castRingHom ℂ)).mahlerMeasure = MQ ^ e * MR := by
-      rw [hPeq, Polynomial.map_mul, Polynomial.map_pow, mahlerMeasure_mul, ← Multiset.prod_replicate,
+      rw [hPeq, Polynomial.map_mul, Polynomial.map_pow, mahlerMeasure_mul,
+          ← Multiset.prod_replicate,
         prod_mahlerMeasure_eq_mahlerMeasure_prod, Multiset.map_replicate, Multiset.prod_replicate]
     have hsup : (P.map (Int.castRingHom ℂ)).supNorm ≤ H := by
       obtain ⟨j, hj⟩ := (P.map (Int.castRingHom ℂ)).exists_eq_supNorm
@@ -136,7 +148,8 @@ theorem small_irreducible_factor
         mul_le_mul (hr.trans hdeg) (by linarith) ha hn0
       have h3 : (Q.natDegree : ℝ) * Real.log MR ≤ n * (2 * Real.log H) :=
         mul_le_mul (hδ.trans hdeg) (by linarith) hb hn0
-      nlinarith [mul_le_mul_of_nonneg_left hl2 (by positivity : (0 : ℝ) ≤ Q.natDegree * R.natDegree)]
+      nlinarith [mul_le_mul_of_nonneg_left hl2
+          (by positivity : (0 : ℝ) ≤ Q.natDegree * R.natDegree)]
     rw [← Real.log_lt_iff_lt_exp hvQ,
       show Real.log H * -((lam - 6) * n / e) = -((lam - 6) * n * Real.log H) / e by ring,
       lt_div_iff₀ he']

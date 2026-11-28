@@ -1,20 +1,42 @@
 /-
-Mirrored from Prove2Me: `FourExp.small_polynomials_of_counterexample`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.small_polynomials_of_counterexample__25405a3b.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/small_polynomials_of_counterexample.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.auxiliary_construction
 public import Diaz.Mirror.nonvanishing_derivative
+public import Mathlib.Tactic.Choose
+
+/-!
+# A counterexample gives small polynomials
+
+Let $l_{11},l_{12},l_{21},l_{22}$ be non-zero complex numbers with every $e^{l_{ij}}$ algebraic,
+$l_{11}l_{22}=l_{12}l_{21}$ and
+$\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}[l_{11},l_{12},l_{21},l_{22}] \le1$, and suppose that
+neither the rows nor the columns of $(l_{ij})$ are linearly dependent over $\mathbb{Q}$. Then there
+are a transcendental $\omega\in\mathbb{C}$, functions $\sigma_1,\sigma_2$ and constants
+$a_1,a_2\ge1$ satisfying the hypotheses of Theorem , such that for every $C\in\mathbb{R}$ there is
+$N_0$ and for every $N>N_0$ a polynomial $P_N\in\mathbb{Z}[X]$ that is small at $\omega$ for $(N,C)$
+with respect to $\sigma_1,\sigma_2$.
+
+Source: [Wal73, § III, Lemmes 4–7], with the zero estimate of [Wal71, §4, Lemme 3]; see also
+[Bro74].
+
+## References
+
+* [Bro74] W. D. Brownawell, *The algebraic independence of certain numbers related by the
+  exponential function*, J. Number Theory 6 (1974), 22–31.
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/small_polynomials_of_counterexample.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.small_polynomials_of_counterexample`.
+-/
 
 @[expose] public section
 
@@ -25,6 +47,14 @@ open Filter Topology
 -- `auxiliary_construction` supplies, for each large `N`, an exponential polynomial whose
 -- zero count is exceeded on a grid of points, and turns any non-zero derivative there into a small
 -- integer polynomial. `nonvanishing_derivative` supplies that non-zero derivative.
+/-- **A counterexample gives small polynomials.** Let $l_{11},l_{12},l_{21},l_{22}$ be non-zero
+complex numbers with every $e^{l_{ij}}$ algebraic, $l_{11}l_{22}=l_{12}l_{21}$ and
+$\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}[l_{11},l_{12},l_{21},l_{22}] \le1$, and suppose that
+neither the rows nor the columns of $(l_{ij})$ are linearly dependent over $\mathbb{Q}$. Then there
+are a transcendental $\omega\in\mathbb{C}$, functions $\sigma_1,\sigma_2$ and constants
+$a_1,a_2\ge1$ satisfying the hypotheses of Theorem , such that for every $C\in\mathbb{R}$ there is
+$N_0$ and for every $N>N_0$ a polynomial $P_N\in\mathbb{Z}[X]$ that is small at $\omega$ for $(N,C)$
+with respect to $\sigma_1,\sigma_2$. -/
 theorem small_polynomials_of_counterexample :
     ∀ l₁₁ l₁₂ l₂₁ l₂₂ : ℂ,
       IsAlgebraic ℚ (Complex.exp l₁₁) → IsAlgebraic ℚ (Complex.exp l₁₂) →

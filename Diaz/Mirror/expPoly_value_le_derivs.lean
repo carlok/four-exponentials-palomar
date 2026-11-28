@@ -1,20 +1,18 @@
 /-
-Mirrored from Prove2Me: `FourExp.expPoly_value_le_derivs`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.expPoly_value_le_derivs__6992a8c1.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/expPoly_value_le_derivs.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.expPoly_iteratedDeriv_le
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Analysis.Complex.TaylorSeries
+public import Mathlib.Tactic.FunProp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # The value of an exponential polynomial from its first derivatives at `0`
@@ -24,9 +22,22 @@ Otherwise `0 ≤ D` (from `s = 0`), and `Transcendence.expPoly_iteratedDeriv_le`
 `‖f⁽ⁿ⁾(0)‖ ≤ D (W + 1)^{n + N}` for every `n`. The Taylor series of the entire function `f` at `0`
 then gives `‖f(u)‖ ≤ ∑ₙ Rⁿ/n! · D (W + 1)^{n + N} ≤ D (W + 1)^N e^{(W + 1) R}`, which is at most
 `N (W + 1)^{N + 1} e^{R (W + 1)} D`. The injectivity of `w` is not needed.
+
+From `Diaz/Mirror/expPoly_value_le_derivs.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.expPoly_value_le_derivs`.
 -/
 
+@[expose] public section
+
+namespace Diaz
+
 open Finset in
+/-- **Values from low-order derivatives.** Let $w_1,\dots,w_l\in\mathbb{C}$ be pairwise distinct
+with $|w_j|\le W$ for some $W\ge0$. For each $j$ let $P_j\in\mathbb{C}[z]$ be zero or of degree less
+than $q_j$, and put $g(z)=\sum_jP_j(z)e^{w_jz}$ and $n=\sum_jq_j$. Let $R\ge0$. If $|g^{(s)}(0)|\le
+D$ for every $s<n$, then
+$$ |g(u)|\le n\,(W+1)^{n+1}e^{R(W+1)}D\qquad\text{whenever }|u|\le R. $$ -/
 theorem expPoly_value_le_derivs
     {l : ℕ} (q : Fin l → ℕ) (w : Fin l → ℂ) (hw : Function.Injective w)
     (P : Fin l → Polynomial ℂ) (hP : ∀ j, P j = 0 ∨ (P j).natDegree < q j)

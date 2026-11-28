@@ -1,18 +1,41 @@
 /-
-Mirrored from Prove2Me: `DiazModulus.four_exponentials_trdeg_one`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/DiazModulus.four_exponentials_trdeg_one__cebab953.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/four_exponentials_trdeg_one.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.Platform
-public import Diaz.Mirror.transcendence_criterion
 public import Diaz.Mirror.small_polynomials_of_counterexample
+public import Diaz.Mirror.transcendence_criterion
+
+/-!
+# Four exponentials in transcendence degree one
+
+Let $l_{11},l_{12},l_{21},l_{22}$ be non-zero logarithms of algebraic numbers with
+$$ l_{11}l_{22} =l_{12}l_{21},
+\qquad\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}(l_{11},l_{12},l_{21},l_{22}) \le1. $$
+Then the two rows, or the two columns, of $\begin{pmatrix}l_{11}&l_{12}\\
+l_{21}&l_{22}\end{pmatrix}$ are linearly dependent over $\mathbb{Q}$. Equivalently, if $x_1,x_2$ and
+$y_1,y_2$ are pairs of complex numbers linearly independent over $\mathbb{Q}$ and the four products
+$x_iy_j$ are logarithms of algebraic numbers, then
+$\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}(x_1,x_2,y_1,y_2)\ge2$.
+
+Source: Waldschmidt [Wal73, Cor. 4] and Brownawell [Bro74, Cor. 7]; stated in this form as [RW95,
+Theorem 1].
+
+## References
+
+* [Bro74] W. D. Brownawell, *The algebraic independence of certain numbers related by the
+  exponential function*, J. Number Theory 6 (1974), 22–31.
+* [RW95] D. Roy and M. Waldschmidt, *Quadratic relations between logarithms of algebraic numbers*,
+  Proc. Japan Acad. Ser. A 71 (1995), 151–153.
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/four_exponentials_trdeg_one.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `DiazModulus.four_exponentials_trdeg_one`.
+-/
 
 @[expose] public section
 
@@ -24,6 +47,15 @@ open Complex ComplexConjugate
 -- construction `small_polynomials_of_counterexample` produces a transcendental `ω` and
 -- integer polynomials that are too small at `ω`; the transcendence criterion
 -- `transcendence_criterion` then makes `ω` algebraic.
+/-- **Four exponentials in transcendence degree one.** Let $l_{11},l_{12},l_{21},l_{22}$ be non-zero
+logarithms of algebraic numbers with
+$$ l_{11}l_{22} =l_{12}l_{21},
+\qquad\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}(l_{11},l_{12},l_{21},l_{22}) \le1. $$
+Then the two rows, or the two columns, of $\begin{pmatrix}l_{11}&l_{12}\\
+l_{21}&l_{22}\end{pmatrix}$ are linearly dependent over $\mathbb{Q}$. Equivalently, if $x_1,x_2$ and
+$y_1,y_2$ are pairs of complex numbers linearly independent over $\mathbb{Q}$ and the four products
+$x_iy_j$ are logarithms of algebraic numbers, then
+$\operatorname{trdeg}_{\mathbb{Q}}\mathbb{Q}(x_1,x_2,y_1,y_2)\ge2$. -/
 theorem four_exponentials_trdeg_one :
     ∀ l₁₁ l₁₂ l₂₁ l₂₂ : ℂ,
       IsAlgebraic ℚ (Complex.exp l₁₁) → IsAlgebraic ℚ (Complex.exp l₁₂) →

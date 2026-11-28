@@ -1,27 +1,20 @@
 /-
-Mirrored from Prove2Me: `FourExp.norm_to_polynomial_alg`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.norm_to_polynomial_alg__09b3d375.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/norm_to_polynomial_alg.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.Mirror.exists_iteratedDeriv_reduced_presentation
 public import Diaz.Mirror.exists_int_norm
+public import Diaz.Mirror.exists_iteratedDeriv_reduced_presentation
 public import Diaz.Mirror.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log
-public import Diaz.Mirror.length_sum_le
-public import Diaz.Mirror.length_mul_le
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
 
 /-!
 # A small nonzero derivative gives an integer polynomial that is small at `ω`
@@ -40,7 +33,15 @@ most `d (e + c₁)`, with `|P(ω)| ≤ |φ(Pol)| (c₁ e^(β A) max(1, |ω|)^e)^
 bounds the three exponents. So `|P(ω)| ≤ e^(k A - N⁴ s / κ')` when
 `|F_q⁽ᵐ⁾(a y₁ + b y₂)| ≤ e^(-N⁴ s / κ')`, and this is below `e^(-C (k A) (k B)) = e^(-C k² N⁴)`
 as soon as `s ≥ 2 κ' (|C| k² + k + 1)`.
+
+From `Diaz/Mirror/norm_to_polynomial_alg.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.norm_to_polynomial_alg`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 namespace NormToPolynomialAlg
 
@@ -72,7 +73,8 @@ lemma length_C_C_mul_le {a : ℤ} {P : Polynomial (Polynomial ℤ)} {x y : ℝ} 
   exact mul_le_mul ha hP (Nat.cast_nonneg _) ((abs_nonneg _).trans ha)
 
 /-- The length of a sum is at most the number of terms times a bound on their lengths. -/
-lemma norm_to_polynomial_alg_length_sum_le {ι : Type*} (s : Finset ι) (f : ι → Polynomial (Polynomial ℤ)) (B : ℝ)
+lemma norm_to_polynomial_alg_length_sum_le {ι : Type*} (s : Finset ι) (f : ι →
+    Polynomial (Polynomial ℤ)) (B : ℝ)
     (h : ∀ i ∈ s, ((∑ k ∈ (f i).support, ∑ j ∈ ((f i).coeff k).support,
       (((f i).coeff k).coeff j).natAbs : ℕ) : ℝ) ≤ B) :
     ((∑ k ∈ (∑ i ∈ s, f i).support, ∑ j ∈ ((∑ i ∈ s, f i).coeff k).support,
@@ -89,30 +91,61 @@ end NormToPolynomialAlg
 
 open Polynomial NormToPolynomialAlg
 
+/-- **From a small value to a small polynomial.** Let $x_1,x_2,y_1,y_2\in\mathbb{C}$ have
+presentation data, suppose every $e^{x_iy_j}$ is algebraic, and let $\kappa,\kappa'>0$. There is
+$k>0$ such that for every $C$ there is $N_0$ with the following property. Let $N>N_0$, $M\le\kappa
+S$, and let $q(i,j,h,\mu,\nu)$ be integers of absolute value at most $e^{\kappa N^{2}\sqrt{\log
+N}}$. If $a<R_1$, $b<R_2$, $s<S'$ and
+$$ 0<|F_q^{(s)}(ay_1+by_2)|\le\exp\bigl(-N^{4}\sqrt{\log N}/\kappa'\bigr), $$
+then some $P\in\mathbb{Z}[X]$ is small at $\omega$ for $(N,C)$ with respect to the growth functions
+of constant $k$. -/
 theorem norm_to_polynomial_alg
     (x₁ x₂ y₁ y₂ : ℂ)
-    (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁, y₂] j))) (ω ω₁ : ℂ) (hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm : Q.Monic) (hQd : 0 < Q.natDegree)
+    (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁,
+        y₂] j))) (ω ω₁ : ℂ) (_hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm :
+            Q.Monic) (hQd : 0 < Q.natDegree)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
-    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
-    (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 → Polynomial (Polynomial ℤ))
-    (hD : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0) (hE : ∀ i, ![x₁, x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i))
-    (hG : ∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j))
-    (hH : ∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j))
+    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
+    (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 →
+        Polynomial (Polynomial ℤ))
+    (hD : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0) (hE : ∀ i,
+        ![x₁, x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+            Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i))
+    (hG : ∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j))
+    (hH : ∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) *
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+            Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j))
     (κ κ' : ℝ) (hκ : 0 < κ) (hκ' : 0 < κ') :
     ∃ k : ℝ, 0 < k ∧ ∀ C : ℝ, ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
       ∀ M : ℕ, (M : ℝ) ≤ κ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
-      ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-      (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) →
-      ∀ a b s : ℕ, a < 14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < 14 * ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ → s < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2 →
-      iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 →
-      ‖iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂)‖
+      ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M →
+          Fin Q.natDegree → ℤ,
+      (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 *
+          Real.sqrt (Real.log (N : ℝ))))) →
+      ∀ a b s : ℕ, a < 14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < 14 * ⌊(N : ℝ) *
+          Real.sqrt (Real.log (N : ℝ))⌋₊ → s < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2 →
+      iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+          ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 →
+      ‖iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+          ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂)‖
           ≤ Real.exp (-(((N : ℝ) ^ 4 * Real.sqrt (Real.log (N : ℝ))) / κ')) →
       ∃ P : Polynomial ℤ, P ≠ 0 ∧
-        (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 * Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-        (P.natDegree : ℝ) ≤ k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) ∧
-        ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 * Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)))) * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ)))))) := by
+        (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
+            Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
+        (P.natDegree : ℝ) ≤ k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 /
+            Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) ∧
+        ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
+            Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)))) * (k *
+                (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 /
+                    Real.sqrt (Real.log (N : ℝ)))))) := by
   -- The presentation of the derivatives, the norm down to `ℚ(ω)`, and the growth bound for
   -- the grid `T ≤ 14 N`.
   obtain ⟨c, hc⟩ := exists_iteratedDeriv_reduced_presentation x₁ x₂ y₁ y₂ hexp ω ω₁ Q
@@ -210,8 +243,10 @@ theorem norm_to_polynomial_alg
       ((Pol.coeff k).coeff i).natAbs = lP := ⟨_, rfl⟩
   have hlPe : (lP : ℝ) ≤ Real.exp (β * A) := by
     rw [← hlP, hPol]
-    refine (norm_to_polynomial_alg_length_sum_le _ _ _ fun i _ => norm_to_polynomial_alg_length_sum_le _ _ _ fun j _ =>
-      norm_to_polynomial_alg_length_sum_le _ _ _ fun k' _ => norm_to_polynomial_alg_length_sum_le _ _ _ fun μ _ => norm_to_polynomial_alg_length_sum_le _ _ _ fun ν _ =>
+    refine (norm_to_polynomial_alg_length_sum_le _ _ _ fun i _ =>
+        norm_to_polynomial_alg_length_sum_le _ _ _ fun j _ =>
+      norm_to_polynomial_alg_length_sum_le _ _ _ fun k' _ => norm_to_polynomial_alg_length_sum_le _
+          _ _ fun μ _ => norm_to_polynomial_alg_length_sum_le _ _ _ fun ν _ =>
       length_C_C_mul_le (hqq i j k' μ ν) ((Nat.cast_le.2 (hRl i j k' μ ν)).trans hL5)).trans ?_
     simp only [Finset.card_univ, Fintype.card_fin]
     push_cast

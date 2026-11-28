@@ -1,19 +1,41 @@
 /-
-Mirrored from Prove2Me: `FourExp.auxiliary_construction`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.auxiliary_construction__74a1621d.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/auxiliary_construction.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.Mirror.rank_one_parametrization
-public import Diaz.Mirror.construction_growth
-public import Diaz.Mirror.construction_count_1973
 public import Diaz.Mirror.construction_core_1973
+public import Diaz.Mirror.construction_count_1973
+public import Diaz.Mirror.construction_growth
+public import Diaz.Mirror.rank_one_parametrization
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+
+/-!
+# The construction
+
+Let $l_{11},l_{12},l_{21},l_{22}$ satisfy the hypotheses of Lemma . Then there are a transcendental
+$\omega$, functions $\sigma_1,\sigma_2$ and constants $a_1,a_2\ge1$ satisfying the hypotheses of
+Theorem , and pairs $x_1,x_2$ and $y_1,y_2$, each linearly independent over $\mathbb{Q}$, with the
+following property. For every $C$ and every large $N$ there are natural numbers $S,T,R_1,R_2,S'$,
+coefficients $c(i,j,h)\in\mathbb{C}$ ($i<S$, $j,h<T$), not all zero, and $\lambda>0$ such that
+* the inequality of Lemma holds, and
+* whenever $a<R_1$, $b<R_2$, $s<S'$ and $G^{(s)}(ay_1+by_2)\neq0$, where
+$$ G(z)=\sum_{i<S}\sum_{j,h<T}c(i,j,h)\,z^{i}e^{(jx_1+hx_2)z}, $$
+some $P\in\mathbb{Z}[X]$ is small at $\omega$ for $(N,C)$ with respect to $\sigma_1,\sigma_2$.
+
+Source: [Wal73, § III, (4) and Lemmes 4, 5, 7].
+
+## References
+
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/auxiliary_construction.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.auxiliary_construction`.
+-/
 
 @[expose] public section
 
@@ -21,6 +43,16 @@ namespace Diaz
 
 open Filter Topology
 
+/-- **The construction.** Let $l_{11},l_{12},l_{21},l_{22}$ satisfy the hypotheses of Lemma . Then
+there are a transcendental $\omega$, functions $\sigma_1,\sigma_2$ and constants $a_1,a_2\ge1$
+satisfying the hypotheses of Theorem , and pairs $x_1,x_2$ and $y_1,y_2$, each linearly independent
+over $\mathbb{Q}$, with the following property. For every $C$ and every large $N$ there are natural
+numbers $S,T,R_1,R_2,S'$, coefficients $c(i,j,h)\in\mathbb{C}$ ($i<S$, $j,h<T$), not all zero, and
+$\lambda>0$ such that
+* the inequality of Lemma holds, and
+* whenever $a<R_1$, $b<R_2$, $s<S'$ and $G^{(s)}(ay_1+by_2)\neq0$, where
+$$ G(z)=\sum_{i<S}\sum_{j,h<T}c(i,j,h)\,z^{i}e^{(jx_1+hx_2)z}, $$
+some $P\in\mathbb{Z}[X]$ is small at $\omega$ for $(N,C)$ with respect to $\sigma_1,\sigma_2$. -/
 theorem auxiliary_construction :
     ∀ l₁₁ l₁₂ l₂₁ l₂₂ : ℂ,
       IsAlgebraic ℚ (Complex.exp l₁₁) → IsAlgebraic ℚ (Complex.exp l₁₂) →

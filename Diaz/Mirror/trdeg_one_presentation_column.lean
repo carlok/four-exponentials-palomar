@@ -1,21 +1,17 @@
 /-
-Mirrored from Prove2Me: `FourExp.trdeg_one_presentation_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.trdeg_one_presentation_column__a34676a8.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/trdeg_one_presentation_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.HermiteLindemann
 public import Diaz.Mirror.exists_monic_integral_model_presentation
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.RingTheory.AlgebraicIndependent.AlgebraicClosure
+public import Mathlib.Tactic.Convert
+public import Mathlib.Tactic.FinCases
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Set
 
 /-!
 # The column data in transcendence degree one
@@ -29,13 +25,22 @@ form with `ω` an algebraically independent pair. This covers `xᵢ`, `yⱼ` and
 The column `e^{xᵢy₂}` is algebraic over `ℚ`, hence over `ℚ(ω)`. The eight numbers `xᵢ`, `yⱼ`,
 `e^{xᵢyⱼ}` then have a common presentation `z · D(ω, ω₁) = E(ω, ω₁)` over one monic integral
 model `Q(ω, ω₁) = 0`, by `Transcendence.exists_monic_integral_model_presentation`.
+
+From `Diaz/Mirror/trdeg_one_presentation_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.trdeg_one_presentation_column`.
 -/
 
-namespace T2_trdeg_one_presentation_column
+@[expose] public section
+
+namespace Diaz
+
+namespace TrdegOnePresentationColumn
 
 /-- In `ℚ[S] ⊆ ℂ` of transcendence degree at most one, every element is algebraic over `ℚ(ω)`,
 for any transcendental `ω ∈ ℚ[S]`. -/
-lemma trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one (S : Set ℂ) (htr : Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ S) ≤ 1)
+lemma trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one (S : Set ℂ) (htr : Algebra.trdeg ℚ
+    ↥(Algebra.adjoin ℚ S) ≤ 1)
     {ω z : ℂ} (hωS : ω ∈ Algebra.adjoin ℚ S) (hzS : z ∈ Algebra.adjoin ℚ S)
     (hω : Transcendental ℚ ω) :
     IsAlgebraic (IntermediateField.adjoin ℚ ({ω} : Set ℂ)) z := by
@@ -58,21 +63,31 @@ lemma trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one (S : Set ℂ) (h
   have := hcard.trans htr
   norm_num at this
 
-end T2_trdeg_one_presentation_column
+end TrdegOnePresentationColumn
 
-open T2_trdeg_one_presentation_column in
+open TrdegOnePresentationColumn in
+/-- **Presenting the field, one algebraic column.** If $x_1,x_2,y_1,y_2$ satisfy the column
+hypotheses, then they have presentation data. -/
 theorem trdeg_one_presentation_column
     (x₁ x₂ y₁ y₂ : ℂ) (hx : LinearIndependent ℚ ![x₁, x₂]) (hy : LinearIndependent ℚ ![y₁, y₂])
     (hexp₂ : ∀ i : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * y₂)))
     (htr : Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ ({x₁, x₂, y₁, y₂, Complex.exp (x₁ * y₁),
       Complex.exp (x₂ * y₁)} : Set ℂ)) ≤ 1) :
     ∃ ω ω₁ : ℂ, Transcendental ℚ ω ∧ ∃ Q : Polynomial (Polynomial ℤ),
-        Q.Monic ∧ 0 < Q.natDegree ∧ Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0 ∧
-        (∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0) ∧
-        ∃ (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 → Polynomial (Polynomial ℤ)),
-          Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0 ∧ (∀ i, ![x₁, x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i)) ∧
-          (∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j)) ∧
-          (∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j)) := by
+        Q.Monic ∧ 0 < Q.natDegree ∧ Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω)
+            ω₁ Q = 0 ∧
+        (∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+            Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0) ∧
+        ∃ (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 →
+            Fin 2 → Polynomial (Polynomial ℤ)),
+          Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0 ∧ (∀ i, ![x₁,
+              x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+                  Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i)) ∧
+          (∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D
+              = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j)) ∧
+          (∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) *
+              Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+                  Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j)) := by
   -- `ω = x₁ y₂` is transcendental, by Hermite–Lindemann applied to the column
   have hx1 : x₁ ≠ 0 := by simpa using hx.ne_zero 0
   have hy2 : y₂ ≠ 0 := by simpa using hy.ne_zero 1

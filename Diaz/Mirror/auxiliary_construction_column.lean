@@ -1,22 +1,16 @@
 /-
-Mirrored from Prove2Me: `FourExp.auxiliary_construction_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.auxiliary_construction_column__7ebfd790.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/auxiliary_construction_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.Mirror.construction_growth
-public import Diaz.Mirror.construction_count_1973
 public import Diaz.Mirror.construction_core_column
-
-@[expose] public section
-
-namespace Diaz
+public import Diaz.Mirror.construction_count_1973
+public import Diaz.Mirror.construction_growth
+public import Mathlib.Tactic.FinCases
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
 
 /-!
 # The auxiliary construction, in the column case
@@ -27,10 +21,24 @@ exponential polynomial whose non-zero derivatives on the 14-fold grid give small
 polynomials; `construction_growth` gives the growth conditions of
 `σ₁ = k N² √(log N)` and `σ₂ = k N² / √(log N)` (glued below `N = 3`) with `a₁ = a₂ = 3`; and
 `construction_count_1973` gives the zero-count inequality with `λ = 1/20` on that grid.
+
+From `Diaz/Mirror/auxiliary_construction_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.auxiliary_construction_column`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 open Filter Topology
 
+/-- **The construction, one algebraic column.** Let $x_1,x_2,y_1,y_2$ satisfy the column hypotheses.
+Then there are a transcendental $\omega$, and functions $\sigma_1,\sigma_2$ and constants
+$a_1,a_2\ge1$ satisfying the hypotheses of Theorem , such that for every $C$ and every large $N$
+there are natural numbers $S,T,R_1,R_2,S'$, coefficients $c(i,j,h)\in\mathbb{C}$ ($i<S$, $j,h<T$),
+not all zero, and $\lambda>0$ with the two properties listed in Lemma , for these $x_1,x_2,y_1,y_2$.
+-/
 theorem auxiliary_construction_column :
     ∀ x₁ x₂ y₁ y₂ : ℂ, LinearIndependent ℚ ![x₁, x₂] → LinearIndependent ℚ ![y₁, y₂] →
       IsAlgebraic ℚ (Complex.exp (x₁ * y₂)) → IsAlgebraic ℚ (Complex.exp (x₂ * y₂)) →

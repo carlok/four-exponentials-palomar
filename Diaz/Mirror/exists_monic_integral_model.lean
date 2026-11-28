@@ -1,19 +1,18 @@
 /-
-Mirrored from Prove2Me: `Transcendence.exists_monic_integral_model`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.exists_monic_integral_model__eeb3febd.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_monic_integral_model.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Algebra.CharP.IntermediateField
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.FieldTheory.IntermediateField.Adjoin.Basic
+public import Mathlib.RingTheory.Localization.Integral
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # A monic integral model of a simple algebraic extension of `ℚ(ω)`
@@ -25,9 +24,17 @@ of the coefficients of `m` with one `v ∈ ℤ[X]`, the product of the `s_k`, an
 `Q(ω, ω₁) = v(ω)^d m(θ) = 0`. Since `ω₁` also has degree `d` over `ℚ(ω)`, and `q ↦ q(ω)` is
 injective on `ℤ[X]` because `ω` is transcendental, no non-zero `A ∈ ℤ[X][Y]` of `Y`-degree below
 `d` vanishes at `(ω, ω₁)`.
+
+From `Diaz/Mirror/exists_monic_integral_model.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.exists_monic_integral_model`.
 -/
 
-namespace S7W4_exists_monic_integral_model
+@[expose] public section
+
+namespace Transcendence
+
+namespace ExistsMonicIntegralModel
 
 open Polynomial
 
@@ -36,7 +43,7 @@ lemma exists_int_scaled (p : ℚ[X]) :
     ∃ b : ℤ, b ≠ 0 ∧ ∃ q : ℤ[X], q.map (Int.castRingHom ℚ) = C (b : ℚ) * p := by
   obtain ⟨b, hb, h⟩ := IsLocalization.integerNormalization_spec (nonZeroDivisors ℤ) p
   refine ⟨b, nonZeroDivisors.ne_zero hb, IsLocalization.integerNormalization (nonZeroDivisors ℤ) p,
-    Polynomial.ext fun i => ?_⟩
+    AddMonoidAlgebra.ext (Finsupp.ext fun i => ?_)⟩
   simpa [coeff_map, coeff_C_mul, algebraMap_int_eq] using congrArg (fun q => q.coeff i) h
 
 /-- The embedding `ℤ[X] → ℚ(ω)`, `q ↦ q(ω)`. -/
@@ -60,7 +67,8 @@ lemma phi_injective {ω : ℂ} (hω : Transcendental ℚ ω) : Function.Injectiv
   intro q hq
   by_contra hq0
   apply hω
-  refine ⟨q.map (Int.castRingHom ℚ), (Polynomial.map_ne_zero_iff (RingHom.injective_int _)).2 hq0, ?_⟩
+  refine ⟨q.map (Int.castRingHom ℚ), (Polynomial.map_ne_zero_iff (RingHom.injective_int _)).2 hq0,
+      ?_⟩
   have h := phi_coe ω q
   rw [hq] at h
   rw [← algebraMap_int_eq, aeval_map_algebraMap]
@@ -93,9 +101,14 @@ lemma int_frac {ω : ℂ} (y : IntermediateField.adjoin ℚ ({ω} : Set ℂ)) :
       eq_intCast (Int.castRingHom ℂ)]
     field_simp
 
-end S7W4_exists_monic_integral_model
+end ExistsMonicIntegralModel
 
-open Polynomial S7W4_exists_monic_integral_model in
+open Polynomial ExistsMonicIntegralModel in
+/-- **A monic integral model.** Let $\omega\in\mathbb{C}$ be transcendental and let
+$\theta\in\mathbb{C}$ be algebraic over $\mathbb{Q}(\omega)$. There are $\omega_1\in\mathbb{C}$ and
+$Q\in\mathbb{Z}[X][Y]$, monic in $Y$ of degree $d\ge1$, with $Q(\omega,\omega_1)=0$ and minimal
+there: no non-zero $A\in\mathbb{Z}[X][Y]$ with $\deg_YA<d$ vanishes at $(\omega,\omega_1)$. Moreover
+$\omega_1=v(\omega)\,\theta$ for some $v\in\mathbb{Z}[X]$ with $v(\omega)\neq0$. -/
 theorem exists_monic_integral_model (ω θ : ℂ) (hω : Transcendental ℚ ω)
     (hθ : IsAlgebraic (IntermediateField.adjoin ℚ ({ω} : Set ℂ)) θ) :
     ∃ (ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)), Q.Monic ∧ 0 < Q.natDegree ∧
@@ -168,16 +181,19 @@ theorem exists_monic_integral_model (ω θ : ℂ) (hω : Transcendental ℚ ω)
       rw [aeval_def, eval₂_map, phi_eval]
       rfl
     have hint : IsIntegral F ω₁ := (isIntegral_algebraMap (x := phiω ω v)).mul hθi
-    have hadj : IntermediateField.adjoin F ({ω₁} : Set ℂ) = IntermediateField.adjoin F ({θ} : Set ℂ) := by
+    have hadj : IntermediateField.adjoin F ({ω₁} : Set ℂ) = IntermediateField.adjoin F ({θ} : Set ℂ)
+        := by
       apply le_antisymm
       · rw [IntermediateField.adjoin_simple_le_iff]
-        exact mul_mem (IntermediateField.algebraMap_mem _ _) (IntermediateField.mem_adjoin_simple_self F θ)
+        exact mul_mem (IntermediateField.algebraMap_mem _ _)
+            (IntermediateField.mem_adjoin_simple_self F θ)
       · rw [IntermediateField.adjoin_simple_le_iff]
         have hθeq : θ = algebraMap F ℂ (phiω ω v)⁻¹ * ω₁ := by
           rw [hω₁, hc, ← mul_assoc, ← map_mul (algebraMap F ℂ), inv_mul_cancel₀ hv0,
             map_one (algebraMap F ℂ), one_mul]
         rw [hθeq]
-        exact mul_mem (IntermediateField.algebraMap_mem _ _) (IntermediateField.mem_adjoin_simple_self F ω₁)
+        exact mul_mem (IntermediateField.algebraMap_mem _ _)
+            (IntermediateField.mem_adjoin_simple_self F ω₁)
     have hdeg1 : (minpoly F ω₁).natDegree = d := by
       rw [← IntermediateField.adjoin.finrank hint, hadj, IntermediateField.adjoin.finrank hθi]
     by_contra hA0'

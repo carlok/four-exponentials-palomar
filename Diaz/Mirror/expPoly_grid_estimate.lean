@@ -1,20 +1,21 @@
 /-
-Mirrored from Prove2Me: `Transcendence.expPoly_grid_estimate`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.expPoly_grid_estimate__a1309f19.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/expPoly_grid_estimate.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.cauchy_estimate_with_zeros
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
+public import Mathlib.Analysis.Convex.Contractible
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.FunProp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # A Cauchy estimate for an exponential polynomial on a grid
@@ -25,8 +26,24 @@ they lie within `ρ = ∑ A_j |y_j|` of the target `w = ∑ m_j y_j` (`m_j < A_j
 radius `R = (ρ + 1) u` about `w` we have `|z| ≤ Z`, so `|F(z)| ≤ (∑ |c_k|) Z^E e^(W Z)`. The Cauchy
 estimate with zeros bounds `|F⁽ʳ⁾(w)|` by `r! · R/(R - 1) · ((ρ + 1)/(R - ρ))^(n ∏ t_j)` times this
 maximum, and for `u ≥ 2` we have `R/(R - 1) ≤ 2` and `(ρ + 1)/(R - ρ) ≤ 1/(u - 1)`.
+
+From `Diaz/Mirror/expPoly_grid_estimate.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.expPoly_grid_estimate`.
 -/
 
+@[expose] public section
+
+namespace Transcendence
+
+/-- **Cauchy's estimate on a grid of zeros.** Let $y_1,\dots,y_l\in\mathbb{C}$ be linearly
+independent over $\mathbb{Q}$, and let $F(z)=\sum_{k\in s}c_kz^{e_k}e^{\omega_kz}$ be a finite sum
+with $|\omega_k|\le W$ and $e_k\le E$ for all $k$. Let $t_j\le A_j$ ($1\le j\le l$) and $n$ be
+natural numbers, and suppose that $F^{(i)}\bigl(\sum_jm'_jy_j\bigr)=0$ for all $i<n$ and all
+$m'\in\mathbb{N}^{l}$ with $m'_j<t_j$ for every $j$. Let $u\ge2$ and
+$Z\ge\bigl(\sum_jA_j|y_j|+1\bigr)(u+1)$. Then for every $m\in\mathbb{N}^{l}$ with $m_j<A_j$ for
+every $j$, every $r\in\mathbb{N}$ and $w=\sum_jm_jy_j$,
+$$ |F^{(r)}(w)|\le2\,r!\,(u-1)^{-n\prod_jt_j}\Bigl(\sum_{k\in s}|c_k|\Bigr)Z^{E}e^{WZ}. $$ -/
 theorem expPoly_grid_estimate {ι κ : Type*} [Fintype ι] (y : ι → ℂ)
     (hy : LinearIndependent ℚ y) (s : Finset κ) (c ω : κ → ℂ) (e : κ → ℕ) (F : ℂ → ℂ)
     (hF : ∀ z, F z = ∑ k ∈ s, c k * z ^ e k * Complex.exp (ω k * z))
@@ -53,7 +70,8 @@ theorem expPoly_grid_estimate {ι κ : Type*} [Fintype ι] (y : ι → ℂ)
     · simp
     intro a b hab
     have := hy.fintypeLinearCombination_injective (a₁ := fun j => (a j : ℚ))
-      (a₂ := fun j => (b j : ℚ)) (by simpa [Fintype.linearCombination_apply, Rat.smul_def] using hab)
+      (a₂ := fun j => (b j : ℚ))
+          (by simpa [Fintype.linearCombination_apply, Rat.smul_def] using hab)
     funext j; exact_mod_cast congrFun this j
   -- every point of the grid is within `ρ` of the target
   have hdist : ∀ m' : ι → ℕ, (∀ j, m' j < A j) →
@@ -83,13 +101,15 @@ theorem expPoly_grid_estimate {ι κ : Type*} [Fintype ι] (y : ι → ℂ)
     gcongr
     · exact (pow_le_pow_left₀ (norm_nonneg _) hzZ _).trans (pow_le_pow_right₀ hZ1 (he k hk))
     · exact (Complex.re_le_norm _).trans (by
-        rw [norm_mul]; exact mul_le_mul (hω k hk) hzZ (norm_nonneg _) ((norm_nonneg _).trans (hω k hk)))
+        rw [norm_mul]; exact mul_le_mul (hω k hk) hzZ (norm_nonneg _) ((norm_nonneg _).trans (hω k
+            hk)))
   -- the target and the grid; every grid point is a zero of order at least `n`
   set w : ℂ := ∑ j, (m j : ℂ) * y j with hwdef
   set R : ℝ := (ρ + 1) * u with hR
   have hPw : ∀ z ∈ P, ‖z - w‖ ≤ ρ := fun z hz => by
     obtain ⟨m', hm', rfl⟩ := Finset.mem_image.1 hz
-    exact hdist m' fun j => ((by simpa using Fintype.mem_piFinset.1 hm' j) : m' j < t j).trans_le (htA j)
+    exact hdist m' fun j => ((by simpa using Fintype.mem_piFinset.1 hm' j) : m' j <
+                                   t j).trans_le (htA j)
   have hM0 : 0 ≤ (∑ k ∈ s, ‖c k‖) * Z ^ E * Real.exp (W * Z) := by
     have : 0 ≤ Z ^ E := pow_nonneg (by linarith) _
     positivity

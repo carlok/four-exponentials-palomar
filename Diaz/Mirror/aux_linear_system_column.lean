@@ -1,20 +1,23 @@
 /-
-Mirrored from Prove2Me: `FourExp.aux_linear_system_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.aux_linear_system_column__35854f65.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/aux_linear_system_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.Order.Star.Int
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Algebra.Polynomial.Degree.Operations
+public import Mathlib.Algebra.Polynomial.Eval.Defs
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
 
 /-!
 # The auxiliary linear system, in the column case
@@ -34,9 +37,17 @@ orders `m < S` the `X`-degrees are at most `M + c (1 + 4 S)`. With `M = (5 c + 1
 below `2 M`, so there are at most half as many equations as unknowns. Each coefficient of the
 system is at most the length of some `R_{ijkμν}`, hence at most `exp(κ N² √(log N))` by
 `exists_pow_mul_pow_le_exp_sq_mul_sqrt_log`.
+
+From `Diaz/Mirror/aux_linear_system_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.aux_linear_system_column`.
 -/
 
-namespace T2_aux_linear_system_column
+@[expose] public section
+
+namespace Diaz
+
+namespace AuxLinearSystemColumn
 
 /-- A single integer coefficient of `P ∈ ℤ[X][Y]` is at most its length. -/
 theorem aux_linear_system_column_natAbs_coeff_le_length (P : Polynomial (Polynomial ℤ)) (k i : ℕ) :
@@ -51,10 +62,14 @@ theorem aux_linear_system_column_natAbs_coeff_le_length (P : Polynomial (Polynom
     · rw [Polynomial.notMem_support_iff.1 hi]; simp
   · rw [Polynomial.notMem_support_iff.1 hk]; simp
 
-end T2_aux_linear_system_column
+end AuxLinearSystemColumn
 
 open Polynomial
 
+/-- **The linear system, one algebraic column.** Let $x_1,x_2,y_1,y_2,\omega,\omega_1\in\mathbb{C}$
+and $Q\in\mathbb{Z}[X][Y]$, and suppose that the derivatives of the functions $F_q$ have reduced
+presentations as in the conclusion of Lemma . Then the conclusion of Lemma holds, with $d=\deg_YQ$.
+-/
 theorem aux_linear_system_column
     (x₁ x₂ y₁ y₂ : ℂ) (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ))
     (hpres : ∃ c : ℕ, ∀ S T M a b m : ℕ, ∃ Λ : ℂ, Λ ≠ 0 ∧
@@ -75,14 +90,25 @@ theorem aux_linear_system_column
             (∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T, ∑ μ : Fin M, ∑ ν : Fin Q.natDegree,
               Polynomial.C (Polynomial.C (q i j k μ ν)) * R i j k μ ν)) :
     ∃ κ₁ : ℝ, 0 < κ₁ ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
-      ∃ M : ℕ, 0 < M ∧ (M : ℝ) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ ∧ ∃ R : ℕ, 2 * R ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree ∧
-      ∃ B : Fin R → Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-        (∀ e i j k' μ ν, |((B e i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ₁ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-        ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-          (∀ e, ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N), ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, B e i j k' μ ν * q i j k' μ ν = 0) →
-          ∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
-            iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0 := by
+      ∃ M : ℕ, 0 < M ∧ (M : ℝ) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ ∧ ∃ R : ℕ,
+          2 * R ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M *
+              Q.natDegree ∧
+      ∃ B : Fin R → Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) →
+          Fin M → Fin Q.natDegree → ℤ,
+        (∀ e i j k' μ ν, |((B e i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ₁ * ((N : ℝ) ^ 2 *
+            Real.sqrt (Real.log (N : ℝ))))) ∧
+        ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M
+            → Fin Q.natDegree → ℤ,
+          (∀ e, ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N),
+              ∑ k' : Fin (2 * N), ∑ μ : Fin M, ∑ ν : Fin Q.natDegree,
+                  B e i j k' μ ν * q i j k' μ ν = 0) →
+          ∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) *
+              Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
+            iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+                ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0 := by
   classical
   -- The derivatives at the points `a y₁ + b y₂`, as values of polynomials reduced modulo `Q`.
   obtain ⟨c, hc⟩ := hpres
@@ -179,7 +205,7 @@ theorem aux_linear_system_column
     dsimp only
     generalize (Fintype.equivFinOfCardEq hcard).symm e = x
     obtain ⟨⟨a, ha⟩, ⟨b, hb⟩, ⟨m, hm⟩, ⟨h, hh⟩, ⟨r, hr⟩⟩ := x
-    show |((((R a b m i j k μ ν).coeff r).coeff h : ℤ) : ℝ)| ≤ _
+    change |((((R a b m i j k μ ν).coeff r).coeff h : ℤ) : ℝ)| ≤ _
     rw [← Int.cast_abs, Int.abs_eq_natAbs, Int.cast_natCast]
     have hA : (a : ℝ) ≤ ((2 : ℕ) : ℝ) * ((N : ℝ) / Real.sqrt (Real.log (N : ℝ))) := by
       have : (a : ℝ) ≤ t₁ := by exact_mod_cast ha.le
@@ -189,7 +215,8 @@ theorem aux_linear_system_column
       have : (b : ℝ) ≤ t₂ := by exact_mod_cast hb.le
       have : (0 : ℝ) ≤ (N : ℝ) * Real.sqrt (Real.log (N : ℝ)) := by positivity
       push_cast; linarith
-    refine (Nat.cast_le.2 ((T2_aux_linear_system_column.aux_linear_system_column_natAbs_coeff_le_length _ r h).trans
+    refine (Nat.cast_le.2
+        ((AuxLinearSystemColumn.aux_linear_system_column_natAbs_coeff_le_length _ r h).trans
       (hRl a b m i j k μ ν))).trans ?_
     refine (hκb N S (2 * N) a b m hN3 hSr hm.le le_rfl hA hB).trans ?_
     exact Real.exp_le_exp.2 (mul_le_mul_of_nonneg_right (by linarith) (by positivity))
@@ -201,7 +228,8 @@ theorem aux_linear_system_column
       simp only [finsetSum_coeff, coeff_C_mul, coeff_zero]
       by_cases hr : r < Q.natDegree
       · by_cases hh : h < Dx + 1
-        · have := hq ((Fintype.equivFinOfCardEq hcard) (⟨a, ha⟩, ⟨b, hb⟩, ⟨m, hm⟩, ⟨h, hh⟩, ⟨r, hr⟩))
+        · have := hq ((Fintype.equivFinOfCardEq hcard) (⟨a, ha⟩, ⟨b, hb⟩, ⟨m, hm⟩, ⟨h, hh⟩, ⟨r,
+            hr⟩))
           simp only [Equiv.symm_apply_apply, Fin.val_mk] at this
           rw [← this]
           refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ =>

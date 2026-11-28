@@ -1,22 +1,17 @@
 /-
-Mirrored from Prove2Me: `FourExp.exists_iteratedDeriv_reduced_presentation_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.exists_iteratedDeriv_reduced_presentation_column__6bdd418a.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_iteratedDeriv_reduced_presentation_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_iteratedDeriv_presentation_column
 public import Diaz.Mirror.exists_modByMonic_length_le
-public import Diaz.Mirror.length_mul_le
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.AffineMonoid.UniqueSums
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+public import Mathlib.Tactic.SplitIfs
 
 /-!
 # The derivatives with integer unknowns, reduced modulo `Q`, in the column case
@@ -35,9 +30,17 @@ modulo `Q` multiplies the length by at most `C₀^(deg Q + c₄ Z')` and adds at
 `C₀ (ν + c₄ Z')` to the `X`-degrees. Both are absorbed into one constant `c`, using
 `Z ≤ Z' ≤ X' = 1 + m + S + T (a + b)`: the length factor `Y'^(c Z)` keeps its exponent, and the
 `X`-degrees are at most `M + c Z'`.
+
+From `Diaz/Mirror/exists_iteratedDeriv_reduced_presentation_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.exists_iteratedDeriv_reduced_presentation_column`.
 -/
 
-namespace T2_exists_iteratedDeriv_reduced_presentation_column
+@[expose] public section
+
+namespace Diaz
+
+namespace ExistsIteratedDerivReducedPresentationColumn
 
 open Polynomial
 
@@ -52,7 +55,8 @@ lemma exists_iteratedDeriv_reduced_presentation_column_length_monomial (μ ν : 
 
 /-- Multiplying by `X^μ Y^ν` raises the `X`-degrees of the coefficients by at most `μ` and the
 `Y`-degree by at most `ν`. -/
-lemma exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P : ℤ[X][X]) (μ ν : ℕ) {e n : ℕ}
+lemma exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P : ℤ[X][X]) (μ ν : ℕ)
+    {e n : ℕ}
     (he : ∀ k, (P.coeff k).natDegree ≤ e) (hn : P.natDegree ≤ n) :
     (∀ k, ((C (X ^ μ) * X ^ ν * P).coeff k).natDegree ≤ μ + e) ∧
       (C (X ^ μ) * X ^ ν * P).natDegree ≤ ν + n := by
@@ -73,9 +77,12 @@ lemma exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P :
           · exact natDegree_X_pow_le ν
       _ = ν + n := by ring
 
-end T2_exists_iteratedDeriv_reduced_presentation_column
+end ExistsIteratedDerivReducedPresentationColumn
 
-open Polynomial T2_exists_iteratedDeriv_reduced_presentation_column in
+open Polynomial ExistsIteratedDerivReducedPresentationColumn in
+/-- **Reduced presentations, one algebraic column.** In the setting of Lemma , let moreover
+$Q\in\mathbb{Z}[X][Y]$ be monic in $Y$ with $\varphi(Q)=0$. Then the conclusion of Lemma holds with
+the $X$-degree bound $M+c(1+m+S+Ta)$ in place of $M+c(1+m+S)$. -/
 theorem exists_iteratedDeriv_reduced_presentation_column
     (x₁ x₂ y₁ y₂ : ℂ)
     (hexp₂ : ∀ i : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * y₂)))
@@ -139,7 +146,8 @@ theorem exists_iteratedDeriv_reduced_presentation_column
       _ ≤ (c : ℝ) ^ (c * X') :=
           pow_le_pow_right₀ (by exact_mod_cast hc1) (Nat.mul_le_mul_right _ (by omega))
   · -- the length: `C₀^(deg Q + c₄ Z') c₄^(c₄ X') Y'^(c₄ Z) ≤ c^(c X') Y'^(c Z)`
-    obtain ⟨hsx, hsy⟩ := exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P i j k) μ ν (hPx i j k) (hPy i j k)
+    obtain ⟨hsx, hsy⟩ := exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P i
+        j k) μ ν (hPx i j k) (hPy i j k)
     have hν : (ν : ℕ) + c₄ * Z' ≤ Q.natDegree + c₄ * Z' := by have := ν.2; omega
     have hmul := Transcendence.length_mul_le
       (C (X ^ (μ : ℕ)) * X ^ (ν : ℕ)) (P i j k)
@@ -160,7 +168,8 @@ theorem exists_iteratedDeriv_reduced_presentation_column
           Nat.mul_le_mul (Nat.pow_le_pow_right hc1 hexp1)
             (Nat.pow_le_pow_right hZY (Nat.mul_le_mul_right _ (by omega)))
   · -- the `X`-degree: `μ + c₄ Z' + C₀ (ν + c₄ Z') ≤ M + c Z'`
-    obtain ⟨hsx, hsy⟩ := exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P i j k) μ ν (hPx i j k) (hPy i j k)
+    obtain ⟨hsx, hsy⟩ := exists_iteratedDeriv_reduced_presentation_column_monomial_mul_degrees (P i
+        j k) μ ν (hPx i j k) (hPy i j k)
     have hmul := Transcendence.length_mul_le
       (C (X ^ (μ : ℕ)) * X ^ (ν : ℕ)) (P i j k)
     rw [exists_iteratedDeriv_reduced_presentation_column_length_monomial, one_mul] at hmul

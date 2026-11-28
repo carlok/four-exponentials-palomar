@@ -1,15 +1,42 @@
 /-
-Mirrored from Prove2Me: `FourExp.zero_count_arith`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.zero_count_arith__5f5f312e.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/zero_count_arith.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Algebra.EuclideanDomain.Basic
+public import Mathlib.Algebra.EuclideanDomain.Field
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+
+/-!
+# From the rescaled inequality to the count
+
+Let $n\ge2$ be an integer and let $x\ge0$, $\lambda>0$ and $\sigma\ge0$ be real. If for every
+$R>x+1$
+$$ \sigma\log\frac{R-x}{x+1} \le\log\Bigl(n!\,2^{n+1}\frac{R}{R-1}\Bigr)+2R, $$
+then
+$$ \sigma<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\,(1+x). $$
+
+Source: After [Wal71, §4, (4.14)].
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/zero_count_arith.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.zero_count_arith`.
+-/
 
 @[expose] public section
 
@@ -60,7 +87,8 @@ lemma log_three_lt : Real.log 3 < 4 / 3 := by
   rw [h3]
   nlinarith [mul_le_mul h1.le h2 (by norm_num) (Real.exp_pos 1).le]
 
-/-- The zero_count_arith_core inequality: with `R = x + (x+1)u` and `u ≥ 3`, the right-hand side of the hypothesis
+/-- The zero_count_arith_core inequality: with `R = x + (x+1)u` and `u ≥ 3`, the right-hand side of
+  the hypothesis
 is below `n log n + 2(1+u)(1+x)`. -/
 lemma zero_count_arith_core (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x) (u : ℝ) (hu : 3 ≤ u) :
     Real.log ((n.factorial : ℝ) * 2 ^ (n + 1) * (x + (x + 1) * u) / (x + (x + 1) * u - 1))
@@ -92,10 +120,16 @@ lemma zero_count_arith_core (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x) (u
 
 end FourExpArith
 
+/-- **From the rescaled inequality to the count.** Let $n\ge2$ be an integer and let $x\ge0$,
+$\lambda>0$ and $\sigma\ge0$ be real. If for every $R>x+1$
+$$ \sigma\log\frac{R-x}{x+1} \le\log\Bigl(n!\,2^{n+1}\frac{R}{R-1}\Bigr)+2R, $$
+then
+$$ \sigma<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\,(1+x). $$ -/
 theorem zero_count_arith
-    (n : ℕ) (hn : 2 ≤ n) (x lam : ℝ) (hx : 0 ≤ x) (hlam : 0 < lam) (σ : ℝ) (hσ : 0 ≤ σ)
+    (n : ℕ) (hn : 2 ≤ n) (x lam : ℝ) (hx : 0 ≤ x) (hlam : 0 < lam) (σ : ℝ) (_hσ : 0 ≤ σ)
     (h : ∀ R : ℝ, x + 1 < R →
-      σ * Real.log ((R - x) / (x + 1)) ≤ Real.log ((n.factorial : ℝ) * 2 ^ (n + 1) * R / (R - 1)) + 2 * R) :
+      σ * Real.log ((R - x) / (x + 1)) ≤ Real.log ((n.factorial : ℝ) * 2 ^ (n + 1) * R / (R - 1)) +
+          2 * R) :
     σ < (n : ℝ) / lam + 2 * (1 + (n : ℝ) ^ lam) / (lam * Real.log (n : ℝ)) * (1 + x) := by
   have hn1 : (1 : ℝ) < n := by exact_mod_cast (by omega : 1 < n)
   have hn0 : (0 : ℝ) < n := by linarith

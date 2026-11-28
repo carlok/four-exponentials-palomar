@@ -1,21 +1,26 @@
 /-
-Mirrored from Prove2Me: `Transcendence.exists_int_pow_repr`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.exists_int_pow_repr__9d02de7f.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_int_pow_repr.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.RingTheory.Localization.Integral
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.SplitIfs
 
 /-!
+# Scaled powers of an algebraic number
+
+Let $K$ be a field of characteristic zero and let $\alpha\in K$ be algebraic over $\mathbb{Q}$.
+There are $\ell,A\in\mathbb{N}$ and an integer $L\neq0$ such that for every $n\in\mathbb{N}$ there
+are integers $r_0,\dots,r_{\ell-1}$ with $|r_l|\le A^{n}$ and
+$$ L^{n}\alpha^{n}=\sum_{l<\ell}r_l\,\alpha^{l}. $$
+
+Source: Standard.
+
+## Proof outline
+
 Since `ℚ` is the fraction field of `ℤ`, `α` has a non-constant annihilator `m ∈ ℤ[X]`; let `d` be
 its degree and `L ≠ 0` its leading coefficient. Put `r₀ = 1` and `r_{n+1} = L X rₙ - c m`, where
 `c` is the coefficient of `X^{d-1}` in `rₙ`.
@@ -25,9 +30,17 @@ its degree and `L ≠ 0` its leading coefficient. Put `r₀ = 1` and `r_{n+1} = 
 * If `H` bounds the coefficients of `m` and `B` those of `rₙ`, the coefficients of `r_{n+1}` are at
   most `|L| B + B H`: those of `X rₙ` are coefficients of `rₙ` or `0`, and `|c| ≤ B`.
 So `ℓ = d` and `A = |L| + H` work, with `r l` the coefficient of `X^l` in `rₙ`.
+
+From `Diaz/Mirror/exists_int_pow_repr.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.exists_int_pow_repr`.
 -/
 
-namespace S7W3_exists_int_pow_repr
+@[expose] public section
+
+namespace Transcendence
+
+namespace ExistsIntPowRepr
 
 open Polynomial
 
@@ -99,9 +112,14 @@ theorem coeff_red_le {H : ℕ} (hH : ∀ i, (m.coeff i).natAbs ≤ H) :
           Nat.add_le_add (Nat.mul_le_mul le_rfl hX) (Nat.mul_le_mul (ih _) (hH l))
       _ = (m.leadingCoeff.natAbs + H) ^ n * (m.leadingCoeff.natAbs + H) := by ring
 
-end S7W3_exists_int_pow_repr
+end ExistsIntPowRepr
 
-open S7W3_exists_int_pow_repr Polynomial in
+open ExistsIntPowRepr Polynomial in
+/-- **Scaled powers of an algebraic number.** Let $K$ be a field of characteristic zero and let
+$\alpha\in K$ be algebraic over $\mathbb{Q}$. There are $\ell,A\in\mathbb{N}$ and an integer
+$L\neq0$ such that for every $n\in\mathbb{N}$ there are integers $r_0,\dots,r_{\ell-1}$ with
+$|r_l|\le A^{n}$ and
+$$ L^{n}\alpha^{n}=\sum_{l<\ell}r_l\,\alpha^{l}. $$ -/
 theorem exists_int_pow_repr {K : Type*} [Field K] [CharZero K] {α : K} (hα : IsAlgebraic ℚ α) :
     ∃ (ℓ A : ℕ) (L : ℤ), L ≠ 0 ∧ ∀ n : ℕ, ∃ r : ℕ → ℤ,
       (L : K) ^ n * α ^ n = ∑ l ∈ Finset.range ℓ, (r l : K) * α ^ l ∧

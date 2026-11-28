@@ -1,19 +1,19 @@
 /-
-Mirrored from Prove2Me: `Transcendence.norm_resultant_le_max_norm_eval`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.norm_resultant_le_max_norm_eval__526d9b69.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/norm_resultant_le_max_norm_eval.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Complex.Polynomial.Basic
+public import Mathlib.Analysis.Polynomial.MahlerMeasure
+public import Mathlib.RingTheory.Polynomial.Resultant.Basic
+public import Mathlib.RingTheory.SimpleRing.Principal
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
 
 /-!
 # A Liouville inequality through the resultant
@@ -28,9 +28,17 @@ because every root `β` of `G` has `|α₁ - β| ≤ 2 |θ - β|`, and each othe
 resultant is `1 ≤ M(F) = |F(θ)|`. This is the complex form of the inequality of Roy–Waldschmidt
 (1997), Corollary 3.7, proved as in their Lemma 3.4: when `F, G ∈ ℤ[X]` are coprime, the resultant
 is a non-zero integer and the right-hand side is at least `1`.
+
+From `Diaz/Mirror/norm_resultant_le_max_norm_eval.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.norm_resultant_le_max_norm_eval`.
 -/
 
-namespace S7W4_norm_resultant_le_max_norm_eval
+@[expose] public section
+
+namespace Transcendence
+
+namespace NormResultantLeMaxNormEval
 
 open Polynomial
 
@@ -133,9 +141,13 @@ lemma bound_near (F G : ℂ[X]) (θ α1 : ℂ) (h1 : α1 ∈ F.roots)
           by ring, pow_mul, pow_succ]
         ring
 
-end S7W4_norm_resultant_le_max_norm_eval
+end NormResultantLeMaxNormEval
 
-open Polynomial S7W4_norm_resultant_le_max_norm_eval in
+open Polynomial NormResultantLeMaxNormEval in
+/-- **Liouville's inequality through the resultant.** Let $F,G\in\mathbb{C}[X]$ with $M(F)\ge1$ and
+$M(G)\ge1$. Then for every $\theta\in\mathbb{C}$
+$$ |\operatorname{Res}(F,G)|\le2^{\deg F\deg G}M(F)^{\deg G}M(G)^{\deg
+F}\max\bigl(|F(\theta)|,|G(\theta)|\bigr). $$ -/
 theorem norm_resultant_le_max_norm_eval (F G : Polynomial ℂ) (hF : 1 ≤ F.mahlerMeasure)
     (hG : 1 ≤ G.mahlerMeasure) (θ : ℂ) :
     ‖F.resultant G‖ ≤ 2 ^ (F.natDegree * G.natDegree) * F.mahlerMeasure ^ G.natDegree *

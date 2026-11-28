@@ -1,23 +1,34 @@
 /-
-Mirrored from Prove2Me: `FourExp.extrapolation`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.extrapolation__17c57c45.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/extrapolation.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.expPoly_grid_estimate
 public import Diaz.Mirror.extrapolation_numbers
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Tactic.FinCases
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
+# Extrapolation
+
+Let $x_1,x_2\in\mathbb{C}$, let $y_1,y_2$ be linearly independent over $\mathbb{Q}$, and let
+$\kappa>0$. There are $\kappa'>0$ and $N_0$ such that for every $N>N_0$ and all coefficients with
+$|c(i,j,h)|\le e^{\kappa N^{2}\sqrt{\log N}}$: if $F^{(m)}(ay_1+by_2)=0$ for all $a<t_1$, $b<t_2$
+and $m<S$, then
+$$ |F^{(s)}(ay_1+by_2)|\le\exp\bigl(-N^{4}\sqrt{\log N}/\kappa'\bigr)\qquad\text{for all }s<S',\
+a<R_1,\ b<R_2. $$
+
+Source: [Wal73, Lemme 5].
+
+## Proof outline
+
 Extrapolation for the auxiliary function of the four exponentials theorem.
 
 `F(z) = ∑ c i j k' z^i e^{(j x₁ + k' x₂) z}` is an exponential polynomial with `S (2N)²` terms,
@@ -29,19 +40,45 @@ by `2 s! (N - 1)^(-t₁ t₂ S) · S (2N)² e^{κ N² q} · Z^S e^{2N X Z}`, wit
 `Z = Y N² q` and `Y = 2 (14 (|y₁| + |y₂|) + 1)`. The zero factor contributes `-N⁴ q / 16` to the
 logarithm and everything else `O(N³ q)`, so for `N ≥ 32 (13 + κ + log Y + 2 X Y)` the bound is at
 most `exp (-N⁴ q / 32)`.
+
+## References
+
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/extrapolation.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.extrapolation`.
 -/
 
+@[expose] public section
+
+namespace Diaz
+
+/-- **Extrapolation.** Let $x_1,x_2\in\mathbb{C}$, let $y_1,y_2$ be linearly independent over
+$\mathbb{Q}$, and let $\kappa>0$. There are $\kappa'>0$ and $N_0$ such that for every $N>N_0$ and
+all coefficients with $|c(i,j,h)|\le e^{\kappa N^{2}\sqrt{\log N}}$: if $F^{(m)}(ay_1+by_2)=0$ for
+all $a<t_1$, $b<t_2$ and $m<S$, then
+$$ |F^{(s)}(ay_1+by_2)|\le\exp\bigl(-N^{4}\sqrt{\log N}/\kappa'\bigr)\qquad\text{for all }s<S',\
+a<R_1,\ b<R_2. $$ -/
 theorem extrapolation
     (x₁ x₂ y₁ y₂ : ℂ) (hy : LinearIndependent ℚ ![y₁, y₂]) (κ : ℝ) (hκ : 0 < κ) :
     ∃ κ' : ℝ, 0 < κ' ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
       ∀ c : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → ℂ,
       (∀ i j k', ‖c i j k'‖ ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) →
-      (∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
-        iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              c i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0) →
-      ∀ s : ℕ, s < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2 → ∀ a b : ℕ, a < 14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < 14 * ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ →
-        ‖iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              c i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂)‖
+      (∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) *
+          Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
+        iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+            ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              c i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) *
+                  z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0) →
+      ∀ s : ℕ, s < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2 → ∀ a b : ℕ,
+          a < 14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < 14 * ⌊(N : ℝ) *
+              Real.sqrt (Real.log (N : ℝ))⌋₊ →
+        ‖iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+            ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              c i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) *
+                  z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂)‖
           ≤ Real.exp (-(((N : ℝ) ^ 4 * Real.sqrt (Real.log (N : ℝ))) / κ')) := by
   set X := ‖x₁‖ + ‖x₂‖ with hX
   set Y : ℝ := 2 * (14 * (‖y₁‖ + ‖y₂‖) + 1) with hY
@@ -91,7 +128,8 @@ theorem extrapolation
     (fun p _ => ?_) (fun p _ => p.1.2.le) ![t₁, t₂] ![14 * t₁, 14 * t₂]
     (fun j => by fin_cases j <;> simp <;> omega) S (fun m hm i hi => ?_) N (Y * ((N : ℝ) ^ 2 * q))
     (by linarith) ?_ ![a, b] (fun j => by fin_cases j <;> simpa) s
-  · simp only [Fin.sum_univ_two, Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one] at key
+  · simp only [Fin.sum_univ_two, Fin.prod_univ_two, Matrix.cons_val_zero,
+      Matrix.cons_val_one] at key
     have hcsum : ∑ p : Fin S × Fin (2 * N) × Fin (2 * N), ‖c p.1 p.2.1 p.2.2‖
         ≤ S * (2 * N) * (2 * N) * Real.exp (κ * ((N : ℝ) ^ 2 * q)) := by
       refine (Finset.sum_le_card_nsmul _ _ _ fun p _ => hc _ _ _).trans_eq ?_

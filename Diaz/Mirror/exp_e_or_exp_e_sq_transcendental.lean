@@ -1,22 +1,16 @@
 /-
-Mirrored from Prove2Me: `Transcendence.exp_e_or_exp_e_sq_transcendental`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.exp_e_or_exp_e_sq_transcendental__093a57a8.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exp_e_or_exp_e_sq_transcendental.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.HermiteLindemann
-public import Diaz.Mirror.trdeg_adjoin_le_one_of_isAlgebraic_adjoin
 public import Diaz.Mirror.two_algebraically_independent_of_exp_column
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Tactic.Convert
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.FinCases
+public import Mathlib.Tactic.LinearCombination
+public import Mathlib.Tactic.NormNum
 
 /-!
 # `e^e` or `e^{e²}` is transcendental
@@ -35,27 +29,39 @@ numbers
 are algebraically independent. But all eight are algebraic over `ℚ[e]`, so the `ℚ`-algebra they
 generate has transcendence degree at most `1`, which contradicts the two algebraically independent
 numbers it contains.
+
+From `Diaz/Mirror/exp_e_or_exp_e_sq_transcendental.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.exp_e_or_exp_e_sq_transcendental`.
 -/
 
-namespace T2_exp_e_or_exp_e_sq_transcendental
+@[expose] public section
+
+namespace Transcendence
+
+namespace ExpEOrExpESqTranscendental
 
 /-! ## Numbers algebraic over `ℚ[x]` -/
 
 /-- The complex numbers algebraic over `ℚ[x]`, as a `ℚ`-subalgebra of `ℂ`. -/
-noncomputable def exp_e_or_exp_e_sq_transcendental_algOver (x : ℂ) : Subalgebra ℚ ℂ :=
+noncomputable def expEOrExpESqTranscendentalAlgOver (x : ℂ) : Subalgebra ℚ ℂ :=
   (Subalgebra.algebraicClosure ↥(Algebra.adjoin ℚ ({x} : Set ℂ)) ℂ).restrictScalars ℚ
 
-theorem exp_e_or_exp_e_sq_transcendental_mem_algOver_of_isAlgebraic {x z : ℂ} (h : IsAlgebraic ℚ z) : z ∈ exp_e_or_exp_e_sq_transcendental_algOver x :=
+theorem exp_e_or_exp_e_sq_transcendental_mem_algOver_of_isAlgebraic {x z : ℂ} (h : IsAlgebraic ℚ z)
+    : z ∈ expEOrExpESqTranscendentalAlgOver x :=
   h.extendScalars (algebraMap ℚ ↥(Algebra.adjoin ℚ ({x} : Set ℂ))).injective
 
-theorem exp_e_or_exp_e_sq_transcendental_self_mem_algOver (x : ℂ) : x ∈ exp_e_or_exp_e_sq_transcendental_algOver x :=
+theorem exp_e_or_exp_e_sq_transcendental_self_mem_algOver (x : ℂ) : x ∈
+    expEOrExpESqTranscendentalAlgOver x :=
   isAlgebraic_algebraMap (⟨x, Algebra.subset_adjoin rfl⟩ : ↥(Algebra.adjoin ℚ ({x} : Set ℂ)))
 
 /-- If every element of `S` is algebraic over `ℚ[x]`, no two elements of `S` are algebraically
 independent over `ℚ`: they would sit in `ℚ[S]`, of transcendence degree at most one. -/
-theorem exp_e_or_exp_e_sq_transcendental_not_algIndep_of_forall_mem_algOver {x : ℂ} {S : Set ℂ} (hS : ∀ s ∈ S, s ∈ exp_e_or_exp_e_sq_transcendental_algOver x)
+theorem exp_e_or_exp_e_sq_transcendental_not_algIndep_of_forall_mem_algOver {x : ℂ} {S : Set ℂ} (hS
+    : ∀ s ∈ S, s ∈ expEOrExpESqTranscendentalAlgOver x)
     {a b : ℂ} (ha : a ∈ S) (hb : b ∈ S) : ¬ AlgebraicIndependent ℚ ![a, b] := fun hab => by
-  have hv : AlgebraicIndependent ℚ (![⟨a, Algebra.subset_adjoin ha⟩, ⟨b, Algebra.subset_adjoin hb⟩] :
+  have hv : AlgebraicIndependent ℚ (![⟨a, Algebra.subset_adjoin ha⟩, ⟨b,
+      Algebra.subset_adjoin hb⟩] :
       Fin 2 → ↥(Algebra.adjoin ℚ S)) :=
     .of_comp (Algebra.adjoin ℚ S).val (by convert hab using 1; funext i; fin_cases i <;> rfl)
   have h := hv.cardinalMk_le_trdeg.trans
@@ -85,9 +91,11 @@ theorem linIndep_one_exp_one (he : Transcendental ℚ (Complex.exp 1)) :
     rw [h']
     exact isAlgebraic_ratCast ℚ _
 
-end T2_exp_e_or_exp_e_sq_transcendental
+end ExpEOrExpESqTranscendental
 
-open T2_exp_e_or_exp_e_sq_transcendental in
+open ExpEOrExpESqTranscendental in
+/-- **Schneider's eighth problem.** At least one of the numbers $e^{e}$ and $e^{e^{2}}$ is
+transcendental. -/
 theorem exp_e_or_exp_e_sq_transcendental :
     Transcendental ℚ (Complex.exp (Complex.exp 1)) ∨
       Transcendental ℚ (Complex.exp (Complex.exp 1 ^ 2)) := by
@@ -107,7 +115,8 @@ theorem exp_e_or_exp_e_sq_transcendental :
   obtain ⟨a, ha, b, hb, hab⟩ := Diaz.two_algebraically_independent_of_exp_column 1
     (Complex.exp 1) 1 (Complex.exp 1) (linIndep_one_exp_one he) (linIndep_one_exp_one he) h12 h22
   -- all eight numbers are algebraic over `ℚ[e]`
-  refine exp_e_or_exp_e_sq_transcendental_not_algIndep_of_forall_mem_algOver (x := Complex.exp 1) ?_ ha hb hab
+  refine exp_e_or_exp_e_sq_transcendental_not_algIndep_of_forall_mem_algOver (x :=
+      Complex.exp 1) ?_ ha hb hab
   intro s hs
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hs
   rcases hs with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl

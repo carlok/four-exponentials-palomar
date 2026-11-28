@@ -7,12 +7,20 @@ pp.unicode.fun = true
 relaxedAutoImplicit = false
 
 [[require]]
+name = "TauCeti"
+git = "https://github.com/TauCetiProject/TauCeti"
+rev = "0642eae29e0a59ef798d04de325386445906e755"
+
+# Keep Mathlib last so its transitive dependency pins take precedence.
+[[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.35.0"
+rev = "v4.36.0"
 
 [[lean_lib]]
 name = "Diaz"
+# The Lean Pool settings: Mathlib's standard linters, and every warning is an error.
+leanOptions = { weak.linter.mathlibStandardSet = true, maxSynthPendingDepth = 3, warningAsError = true }
 
 [[lean_lib]]
 name = "Challenge"

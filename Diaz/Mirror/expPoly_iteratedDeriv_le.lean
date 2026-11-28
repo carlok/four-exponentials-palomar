@@ -1,19 +1,16 @@
 /-
-Mirrored from Prove2Me: `Transcendence.expPoly_iteratedDeriv_le`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.expPoly_iteratedDeriv_le__d311856e.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/expPoly_iteratedDeriv_le.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Calculus.Deriv.Polynomial
+public import Mathlib.Analysis.Complex.CauchyIntegral
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
 
 /-!
 # All derivatives of an exponential polynomial from its first `N`
@@ -26,9 +23,22 @@ suppose `‖f⁽ˢ⁾(c)‖ ≤ D` for `s < N`. Induct on `N`. If `N = 0`, every
 `D (W + 1)`, so by induction `‖g⁽ⁿ⁾(c)‖ ≤ D (W + 1)^{n + N}`. Finally
 `f⁽ⁿ⁺¹⁾(c) = g⁽ⁿ⁾(c) + w_{j₀} f⁽ⁿ⁾(c)` gives the bound for `f` by induction on `n`, because
 `D (W + 1)^{n + N} + W · D (W + 1)^{n + N} = D (W + 1)^{n + 1 + N}`.
+
+From `Diaz/Mirror/expPoly_iteratedDeriv_le.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.expPoly_iteratedDeriv_le`.
 -/
 
+@[expose] public section
+
+namespace Transcendence
+
 open Finset Polynomial in
+/-- **Derivatives at a point.** Let $f(z)=\sum_{j\in J}P_j(z)e^{w_jz}$, over a finite set $J$, with
+$|w_j|\le W$ for some $W\ge0$, and each $P_j\in\mathbb{C}[z]$ zero or of degree less than $q_j$; put
+$N=\sum_jq_j$. Let $c\in\mathbb{C}$ and $D\ge0$. If $|f^{(s)}(c)|\le D$ for every $s<N$, then
+$$ |f^{(n)}(c)|\le D\,(W+1)^{n+N}\qquad\text{for every }n\in\mathbb{N}. $$
+The $w_j$ need not be distinct. -/
 theorem expPoly_iteratedDeriv_le {ι : Type*} [Fintype ι] (w : ι → ℂ) (W : ℝ) (hW0 : 0 ≤ W)
     (hW : ∀ j, ‖w j‖ ≤ W) (c : ℂ) (N : ℕ) (q : ι → ℕ) (P : ι → ℂ[X])
     (hP : ∀ j, P j = 0 ∨ (P j).natDegree < q j) (hN : ∑ j, q j = N) (D : ℝ) (hD0 : 0 ≤ D)
@@ -44,8 +54,10 @@ theorem expPoly_iteratedDeriv_le {ι : Type*} [Fintype ι] (w : ι → ℂ) (W :
     fun R z => HasDerivAt.fun_sum fun j _ => by
       have h2 : HasDerivAt (fun y => Complex.exp (w j * y)) (Complex.exp (w j * z) * w j) z := by
         simpa using ((hasDerivAt_id z).const_mul (w j)).cexp
-      exact (((R j).hasDerivAt z).mul h2).congr_deriv (by simp only [eval_add, eval_mul, eval_C]; ring)
-  have hdiff : ∀ R : ι → ℂ[X], Differentiable ℂ (fun y => ∑ j, (R j).eval y * Complex.exp (w j * y)) :=
+      exact (((R j).hasDerivAt z).mul h2).congr_deriv
+          (by simp only [eval_add, eval_mul, eval_C]; ring)
+  have hdiff : ∀ R : ι → ℂ[X], Differentiable ℂ (fun y => ∑ j,
+      (R j).eval y * Complex.exp (w j * y)) :=
     fun R z => (hder R z).differentiableAt
   induction N generalizing q P D n with
   | zero =>

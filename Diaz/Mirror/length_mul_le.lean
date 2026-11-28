@@ -1,21 +1,23 @@
 /-
-Mirrored from Prove2Me: `Transcendence.length_mul_le`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.length_mul_le__e8591582.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/length_mul_le.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Algebra.Polynomial.Coeff
+public import Mathlib.Algebra.Polynomial.Eval.Defs
+public import Mathlib.Tactic.SplitIfs
 
 /-!
+# Length of a product
+
+For all $P,Q\in\mathbb{Z}[X][Y]$, $L(PQ)\le L(P)\,L(Q)$.
+
+Source: Standard.
+
+## Proof outline
+
 For a size function `ν : R → ℕ` on a semiring `R` and `p ∈ R[X]`, let `λ_ν(p) = ∑ₙ ν(pₙ)`, the
 sum running over the support of `p`. The length of `P ∈ ℤ[X][Y]` is `λ_{λ_ν}(P)` with `ν = |·|`.
 
@@ -29,9 +31,17 @@ properties.
 
 Starting from `ν = |·|` on `ℤ`, this gives the one-variable statement on `ℤ[X]`; applied again to
 `ν = λ_{|·|}` on `ℤ[X]`, it gives the statement on `ℤ[X][Y]`.
+
+From `Diaz/Mirror/length_mul_le.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.length_mul_le`.
 -/
 
-namespace S7W3_length_mul_le
+@[expose] public section
+
+namespace Transcendence
+
+namespace LengthMulLe
 
 open Polynomial
 
@@ -65,7 +75,7 @@ noncomputable def hat (ν : R → ℕ) (p : R[X]) : ℕ[X] :=
 theorem coeff_hat (ν : R → ℕ) (hν : ν 0 = 0) (p : R[X]) (n : ℕ) :
     (hat ν p).coeff n = ν (p.coeff n) := by
   classical
-  simp only [hat, finsetSum_coeff, coeff_monomial, Finset.sum_ite_eq']
+  simp only [hat, finsetSum_coeff, coeff_monomial_apply, Finset.sum_ite_eq']
   split_ifs with h
   · rfl
   · rw [notMem_support_iff.1 h, hν]
@@ -87,9 +97,10 @@ theorem lam_mul_le (ν : R → ℕ) (hν : ν 0 = 0) (hadd : ∀ a b, ν (a + b)
   rw [coeff_hat ν hν, coeff_hat ν hν]
   exact hmul _ _
 
-end S7W3_length_mul_le
+end LengthMulLe
 
-open S7W3_length_mul_le in
+open LengthMulLe in
+/-- **Length of a product.** For all $P,Q\in\mathbb{Z}[X][Y]$, $L(PQ)\le L(P)\,L(Q)$. -/
 theorem length_mul_le (P Q : Polynomial (Polynomial ℤ)) :
     ∑ k ∈ (P * Q).support, ∑ i ∈ ((P * Q).coeff k).support, (((P * Q).coeff k).coeff i).natAbs ≤
       (∑ k ∈ P.support, ∑ i ∈ (P.coeff k).support, ((P.coeff k).coeff i).natAbs) *

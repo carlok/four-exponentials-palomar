@@ -1,15 +1,40 @@
 /-
-Mirrored from Prove2Me: `FourExp.construction_count_1973`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.construction_count_1973__90439cea.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/construction_count_1973.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+
+/-!
+# The parameters beat the zero count
+
+Let $X,Y_1,Y_2\ge0$. There is $N_0$ such that for every integer $N>N_0$, with $T=2N$, $\lambda=1/20$
+and $n=ST^{2}$,
+$$ \frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\bigl(1+(R_1Y_1+R_2Y_2)\,TX\bigr)\le
+R_1R_2S'. $$
+
+Source: The parameters of [Wal73, (4) and Lemme 6] against the zero estimate [Wal71, §4, Lemme 3].
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/construction_count_1973.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.construction_count_1973`.
+-/
 
 @[expose] public section
 
@@ -20,9 +45,9 @@ namespace FourExpCount
 /-- The counting inequality, as pure algebra. `S`, `t₁`, `t₂`, `d`, `T` stand for the
 floor quantities, and `W` for `X(Y₁+Y₂)`. -/
 lemma count_core (N q S t₁ t₂ d T W : ℝ) (hW : 0 ≤ W) (hq : 40 * (1 + 28 * W) ≤ q)
-    (hqN : q ^ 2 ≤ N) (hN : 84 ≤ N) (hS1 : S * q ≤ N ^ 2) (hS2 : N ^ 2 ≤ (S + 1) * q)
+    (hqN : q ^ 2 ≤ N) (hN : 84 ≤ N) (_hS1 : S * q ≤ N ^ 2) (hS2 : N ^ 2 ≤ (S + 1) * q)
     (hSone : 1 ≤ S) (ht1 : N - q ≤ q * t₁) (ht2 : N * q - 1 ≤ t₂) (ht1n : 0 ≤ t₁)
-    (ht2n : 0 ≤ t₂) (hd : S - 1 ≤ 2 * d) (hdn : 0 ≤ d) (hTn : 0 ≤ T)
+    (ht2n : 0 ≤ t₂) (hd : S - 1 ≤ 2 * d) (_hdn : 0 ≤ d) (_hTn : 0 ≤ T)
     (hT : T * q ^ 2 ≤ 40 * (1 + 28 * W) * N ^ 4) :
     80 * N ^ 2 * S + T ≤ 196 * (t₁ * t₂ * d) := by
   have hq7 : (7:ℝ) ≤ q := by nlinarith
@@ -72,7 +97,7 @@ lemma count_core (N q S t₁ t₂ d T W : ℝ) (hW : 0 ≤ W) (hq : 40 * (1 + 28
   exact le_of_mul_le_mul_left hchain hqpos
 
 open Real in
-lemma rpow_U_le {U : ℕ} {N : ℝ} (hN : 2 ≤ N) (hU : (U : ℝ) ≤ N ^ (20:ℕ)) :
+lemma rpow_U_le {U : ℕ} {N : ℝ} (hN : 2 ≤ N) (hU : (U : ℝ) ≤ N ^ (20 : ℕ)) :
     ((U : ℝ)) ^ (1 / 20 : ℝ) ≤ N := by
   have hNpos : (0:ℝ) < N := by linarith
   calc ((U : ℝ)) ^ (1 / 20 : ℝ) ≤ (N ^ (20:ℕ)) ^ (1 / 20 : ℝ) :=
@@ -107,7 +132,8 @@ lemma q_facts (N : ℕ) (hN : 84 ≤ N) :
 
 lemma S_facts (N : ℕ) (hN : 84 ≤ N) :
     (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) * Real.sqrt (Real.log (N:ℝ)) ≤ (N:ℝ) ^ 2 ∧
-      (N:ℝ) ^ 2 ≤ ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) + 1) * Real.sqrt (Real.log (N:ℝ)) ∧
+      (N:ℝ) ^ 2 ≤ ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) + 1) * Real.sqrt (Real.log (N:ℝ))
+          ∧
       1 ≤ (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) ∧
       (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) ≤ (N:ℝ) ^ 2 := by
   obtain ⟨hq1, hq2, hlogpos, hqN, hqq⟩ := q_facts N hN
@@ -147,7 +173,8 @@ lemma t_facts (N : ℕ) (hN : 84 ≤ N) :
 lemma U_facts (N : ℕ) (hN : 84 ≤ N) :
     ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)
         = 4 * (N:ℝ) ^ 2 * (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) ∧
-      (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ) ≤ (N:ℝ) ∧
+      (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ) ≤
+          (N:ℝ) ∧
       2 * Real.log (N:ℝ)
         ≤ Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) := by
   obtain ⟨hq1, hq2, hlogpos, hqN, hqq⟩ := q_facts N hN
@@ -156,7 +183,8 @@ lemma U_facts (N : ℕ) (hN : 84 ≤ N) :
   have hNpos : (0:ℝ) < (N:ℝ) := by linarith
   have hUeq : ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)
       = 4 * (N:ℝ) ^ 2 * (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) := by push_cast; ring
-  have hUN2 : (N:ℝ) ^ 2 ≤ ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ) := by
+  have hUN2 : (N:ℝ) ^ 2 ≤ ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)
+      := by
     rw [hUeq]; nlinarith
   refine ⟨hUeq, ?_, ?_⟩
   · refine rpow_U_le (by linarith) ?_
@@ -196,8 +224,8 @@ lemma Z_bound (N : ℕ) (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 ≤ Y₁) 
         mul_le_mul_of_nonneg_right hsum h1
     _ = 28 * (N:ℝ) ^ 3 * (X * (Y₁ + Y₂)) := by ring
 
-lemma T_bound (L u Z W N : ℝ) (hN : 84 ≤ N) (hL : 2 * Real.log N ≤ L) (hu : u ≤ N) (hu0 : 0 ≤ u)
-    (hZ : Z ≤ 28 * N ^ 3 * W) (hZ0 : 0 ≤ Z) (hW : 0 ≤ W) (hlogN : 0 < Real.log N) :
+lemma T_bound (L u Z W N : ℝ) (hN : 84 ≤ N) (hL : 2 * Real.log N ≤ L) (hu : u ≤ N) (_hu0 : 0 ≤ u)
+    (hZ : Z ≤ 28 * N ^ 3 * W) (hZ0 : 0 ≤ Z) (_hW : 0 ≤ W) (hlogN : 0 < Real.log N) :
     2 * (1 + u) / ((1 / 20 : ℝ) * L) * (1 + Z) * Real.log N ≤ 40 * (1 + 28 * W) * N ^ 4 := by
   have hLpos : 0 < L := by linarith
   have hA : 2 * (1 + u) / ((1 / 20 : ℝ) * L) * Real.log N ≤ 40 * N := by
@@ -215,12 +243,22 @@ lemma T_bound (L u Z W N : ℝ) (hN : 84 ≤ N) (hL : 2 * Real.log N ≤ L) (hu 
 
 end FourExpCount
 
+/-- **The parameters beat the zero count.** Let $X,Y_1,Y_2\ge0$. There is $N_0$ such that for every
+integer $N>N_0$, with $T=2N$, $\lambda=1/20$ and $n=ST^{2}$,
+$$ \frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\bigl(1+(R_1Y_1+R_2Y_2)\,TX\bigr)\le
+R_1R_2S'. $$ -/
 theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 ≤ Y₁) (hY₂ : 0 ≤ Y₂) :
     ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
-      ((((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊) * (2 * N) * (2 * N) : ℕ) : ℝ) / (1 / 20 : ℝ)
-              + 2 * (1 + (((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊) * (2 * N) * (2 * N) : ℕ) : ℝ) ^ (1 / 20 : ℝ)) / ((1 / 20 : ℝ) * Real.log ((((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊) * (2 * N) * (2 * N) : ℕ) : ℝ)))
-                * (1 + (((14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊) : ℕ) * Y₁ + ((14 * ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊) : ℕ) * Y₂) * (((2 * N) : ℕ) * X))
-            ≤ ((((14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊)) * ((14 * ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊)) * (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2) : ℕ) : ℝ)) := by
+      ((((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊) * (2 * N) * (2 * N) : ℕ) : ℝ) / (1 /
+          20 : ℝ)
+              + 2 * (1 + (((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊) * (2 * N) * (2 *
+                  N) : ℕ) : ℝ) ^ (1 / 20 : ℝ)) / ((1 / 20 : ℝ) * Real.log ((((⌊(N : ℝ) ^ 2 /
+                      Real.sqrt (Real.log (N : ℝ))⌋₊) * (2 * N) * (2 * N) : ℕ) : ℝ)))
+                * (1 + (((14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊) : ℕ) * Y₁ + ((14 *
+                    ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊) : ℕ) * Y₂) * (((2 * N) : ℕ) * X))
+            ≤ ((((14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊)) * ((14 * ⌊(N : ℝ) *
+                Real.sqrt (Real.log (N : ℝ))⌋₊)) * (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ /
+                    2) : ℕ) : ℝ)) := by
   classical
   obtain ⟨W, hWdef⟩ : ∃ W : ℝ, W = X * (Y₁ + Y₂) := ⟨_, rfl⟩
   have hW0 : 0 ≤ W := by rw [hWdef]; positivity
@@ -246,7 +284,8 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
       rw [Real.sqrt_sq (by positivity)]]
     exact Real.sqrt_le_sqrt hlogbig
   have hZ0 : (0:ℝ) ≤ ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-      + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X) := by
+      + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X)
+          := by
     have h1 : (0:ℝ) ≤ (((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) := Nat.cast_nonneg _
     have h2 : (0:ℝ) ≤ (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) := Nat.cast_nonneg _
     have h3 : (0:ℝ) ≤ (((2 * N) : ℕ) : ℝ) := Nat.cast_nonneg _
@@ -254,7 +293,8 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
     have := mul_nonneg h2 hY₂
     have := mul_nonneg h3 hX
     positivity
-  have hrp0 : (0:ℝ) ≤ (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ) :=
+  have hrp0 : (0:ℝ) ≤ (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+      N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ) :=
     Real.rpow_nonneg (Nat.cast_nonneg _) _
   have hTq := FourExpCount.T_bound
     (Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
@@ -262,17 +302,24 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
     (((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
       + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X))
     W (N:ℝ) hN84r hlogU hrp hrp0 hZ hZ0 hW0 hlogpos
-  have hTn : (0:ℝ) ≤ 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
-      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
+  have hTn : (0:ℝ) ≤ 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+      N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
+      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+          N) : ℕ) : ℝ)))
       * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X)) := by
-    have hL : (0:ℝ) < Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) := by
+        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) *
+            X)) := by
+    have hL : (0:ℝ) < Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+        N) : ℕ) : ℝ)) := by
       linarith
     positivity
-  have hTq' : (2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
-      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
+  have hTq' : (2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+      N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
+      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+          N) : ℕ) : ℝ)))
       * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X)))
+        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) *
+            X)))
       * Real.sqrt (Real.log (N:ℝ)) ^ 2 ≤ 40 * (1 + 28 * W) * (N:ℝ) ^ 4 := by
     rw [show Real.sqrt (Real.log (N:ℝ)) ^ 2 = Real.log (N:ℝ) from by rw [sq, hqq]]
     exact hTq
@@ -281,26 +328,37 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
     (⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ)
     (⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ)
     ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ / 2 : ℕ) : ℝ)
-    (2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
-      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
+    (2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 /
+        20 : ℝ))
+      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+          N) : ℕ) : ℝ)))
       * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X)))
+        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) *
+            X)))
     W hW0 hQ hq2 hN84r hS1 hS2 hSone ht1 ht2 (Nat.cast_nonneg _) (Nat.cast_nonneg _)
     (FourExpCount.nat_div_two_ge _) (Nat.cast_nonneg _) hTn hTq'
   calc ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ) / (1 / 20 : ℝ)
-        + 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
-          / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
+        + 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1
+            / 20 : ℝ))
+          / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+              N) : ℕ) : ℝ)))
           * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-            + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X))
+            + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ)
+                * X))
       = 80 * (N:ℝ) ^ 2 * (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ)
-        + 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
-          / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
+        + 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1
+            / 20 : ℝ))
+          / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
+              N) : ℕ) : ℝ)))
           * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-            + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X)) := by
+            + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ)
+                * X)) := by
         rw [hUeq]; ring
-    _ ≤ 196 * ((⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) * (⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ)
+    _ ≤ 196 * ((⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ) * (⌊(N:ℝ) *
+        Real.sqrt (Real.log (N:ℝ))⌋₊ : ℝ)
         * ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ / 2 : ℕ) : ℝ)) := key
-    _ = (((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) * (14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊)
+    _ = (((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) * (14 * ⌊(N:ℝ) *
+        Real.sqrt (Real.log (N:ℝ))⌋₊)
         * (⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ / 2) : ℕ) : ℝ) := by push_cast; ring
 
 end Diaz

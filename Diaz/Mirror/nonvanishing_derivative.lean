@@ -1,20 +1,46 @@
 /-
-Mirrored from Prove2Me: `FourExp.nonvanishing_derivative`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.nonvanishing_derivative__4215fb5b.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/nonvanishing_derivative.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.expPoly_zero_count
-public import Diaz.Mirror.expPoly_ne_zero
+public import Mathlib.Order.Filter.Defs
+public import Mathlib.Tactic.FunProp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.LinearCombination
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Push
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+
+/-!
+# A non-zero derivative on the grid
+
+Let $x_1,x_2$ be linearly independent over $\mathbb{Q}$, and likewise $y_1,y_2$. Let
+$S,T,R_1,R_2,S'\in\mathbb{N}$ and let $c(i,j,h)\in\mathbb{C}$ ($i<S$, $j,h<T$) be not all zero; put
+$$ G(z) =\sum_{i<S}\sum_{j,h<T}c(i,j,h)\,z^{i}e^{(jx_1+hx_2)z}, \qquad n=ST^{2}. $$
+If for some $\lambda>0$
+$$ \frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log
+n}\Bigl(1+(R_1|y_1|+R_2|y_2|)\,T(|x_1|+|x_2|)\Bigr)\le R_1R_2S', $$
+then $G^{(s)}(ay_1+by_2)\neq0$ for some $a<R_1$, $b<R_2$ and $s<S'$.
+
+Source: [Wal73, Lemme 6], with the zero estimate [Wal71, §4, Lemme 3] in place of Gel'fond's zero
+lemma.
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/nonvanishing_derivative.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.nonvanishing_derivative`.
+-/
 
 @[expose] public section
 
@@ -22,6 +48,14 @@ namespace Diaz
 
 open Finset
 
+/-- **A non-zero derivative on the grid.** Let $x_1,x_2$ be linearly independent over $\mathbb{Q}$,
+and likewise $y_1,y_2$. Let $S,T,R_1,R_2,S'\in\mathbb{N}$ and let $c(i,j,h)\in\mathbb{C}$ ($i<S$,
+$j,h<T$) be not all zero; put
+$$ G(z) =\sum_{i<S}\sum_{j,h<T}c(i,j,h)\,z^{i}e^{(jx_1+hx_2)z}, \qquad n=ST^{2}. $$
+If for some $\lambda>0$
+$$ \frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log
+n}\Bigl(1+(R_1|y_1|+R_2|y_2|)\,T(|x_1|+|x_2|)\Bigr)\le R_1R_2S', $$
+then $G^{(s)}(ay_1+by_2)\neq0$ for some $a<R_1$, $b<R_2$ and $s<S'$. -/
 theorem nonvanishing_derivative
     (x₁ x₂ y₁ y₂ : ℂ) (hx : LinearIndependent ℚ ![x₁, x₂]) (hy : LinearIndependent ℚ ![y₁, y₂])
     (S T R₁ R₂ S' : ℕ) (c : Fin S → Fin T → Fin T → ℂ) (hc : ∃ i j k, c i j k ≠ 0)
@@ -36,12 +70,13 @@ theorem nonvanishing_derivative
         ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 := by
   classical
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   obtain ⟨i₀, j₀, k₀, hc₀⟩ := hc
   have hT : 0 < T := j₀.pos
   have hS : 0 < S := i₀.pos
   set G : ℂ → ℂ := (fun z : ℂ => ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T,
-      c i j k * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * z)) with hGdef
+      c i j k * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) *
+          z)) with hGdef
   -- index the frequencies by `Fin (T * T)`
   let e : Fin T × Fin T ≃ Fin (T * T) := finProdFinEquiv
   let ω : Fin (T * T) → ℂ := fun m =>
@@ -122,7 +157,7 @@ theorem nonvanishing_derivative
     have hb' : (p.2 : ℝ) ≤ R₂ := by exact_mod_cast hp.2.le
     calc ‖(p.1 : ℂ) * y₁ + (p.2 : ℂ) * y₂ - 0‖ ≤ ‖(p.1 : ℂ) * y₁‖ + ‖(p.2 : ℂ) * y₂‖ := by
           rw [sub_zero]; exact norm_add_le _ _
-      _ = (p.1 : ℝ) * ‖y₁‖ + (p.2 : ℝ) * ‖y₂‖ := by simp [norm_mul]
+      _ = (p.1 : ℝ) * ‖y₁‖ + (p.2 : ℝ) * ‖y₂‖ := by simp
       _ ≤ ρ := by rw [hρdef]; gcongr
   have hB := expPoly_zero_count q ω hω b hb 0 ρ hρ lam hlam grid hdisc
   have hn : (∑ m, q m : ℕ) = S * T * T := by
@@ -142,7 +177,7 @@ theorem nonvanishing_derivative
     have hk : (((e.symm m).2 : ℕ) : ℝ) ≤ T := by exact_mod_cast (e.symm m).2.is_lt.le
     calc ‖ω m‖ ≤ ‖(((e.symm m).1 : ℕ) : ℂ) * x₁‖ + ‖(((e.symm m).2 : ℕ) : ℂ) * x₂‖ :=
           norm_add_le _ _
-      _ = (((e.symm m).1 : ℕ) : ℝ) * ‖x₁‖ + (((e.symm m).2 : ℕ) : ℝ) * ‖x₂‖ := by simp [norm_mul]
+      _ = (((e.symm m).1 : ℕ) : ℝ) * ‖x₁‖ + (((e.symm m).2 : ℕ) : ℝ) * ‖x₂‖ := by simp
       _ ≤ (T : ℝ) * ‖x₁‖ + (T : ℝ) * ‖x₂‖ := by gcongr
       _ = (T : ℝ) * (‖x₁‖ + ‖x₂‖) := by ring
   have hn1 : (1 : ℝ) ≤ ((S * T * T : ℕ) : ℝ) := by

@@ -1,18 +1,48 @@
 /-
-Mirrored from Prove2Me: `FourExp.expPoly_zero_count_scaled`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.expPoly_zero_count_scaled__f34d8db7.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/expPoly_zero_count_scaled.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.cauchy_estimate_with_zeros
-public import Diaz.Mirror.expPoly_value_le_derivs
 public import Diaz.Mirror.expPoly_ne_zero
+public import Diaz.Mirror.expPoly_value_le_derivs
+public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
+public import Mathlib.Analysis.Convex.Contractible
+public import Mathlib.Order.Filter.Defs
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.FunProp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.LinearCombination
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Push
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+public import Mathlib.Topology.Separation.CompletelyRegular
+
+/-!
+# The rescaled inequality
+
+Let $f(z)=\sum_{j=1}^{l}\sum_{i<q_j}b_{j,i}z^{i}e^{\omega_jz}$ with pairwise distinct $\omega_j$ and
+$b_{j,i}$ not all zero; put $n=\sum_jq_j$ and $\Omega=\max_j|\omega_j|$, and suppose $\Omega>0$. Let
+$z_0\in\mathbb{C}$, $\rho\ge0$, let $S$ be a finite set of points of the disc $|z-z_0|\le\rho$, and
+put $\sigma=\sum_{z\in S}\operatorname{ord}_zf$ and $x=\rho\Omega$. Then for every $R>x+1$
+$$ \sigma\log\frac{R-x}{x+1} \le\log\Bigl(n!\,2^{n+1}\frac{R}{R-1}\Bigr)+2R. $$
+
+Source: [Wal71, §4, (4.14)] and the rescaling that follows it.
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/expPoly_zero_count_scaled.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.expPoly_zero_count_scaled`.
+-/
 
 @[expose] public section
 
@@ -20,13 +50,20 @@ namespace Diaz
 
 open Finset Polynomial
 
+/-- **The rescaled inequality.** Let $f(z)=\sum_{j=1}^{l}\sum_{i<q_j}b_{j,i}z^{i}e^{\omega_jz}$ with
+pairwise distinct $\omega_j$ and $b_{j,i}$ not all zero; put $n=\sum_jq_j$ and
+$\Omega=\max_j|\omega_j|$, and suppose $\Omega>0$. Let $z_0\in\mathbb{C}$, $\rho\ge0$, let $S$ be a
+finite set of points of the disc $|z-z_0|\le\rho$, and put $\sigma=\sum_{z\in
+S}\operatorname{ord}_zf$ and $x=\rho\Omega$. Then for every $R>x+1$
+$$ \sigma\log\frac{R-x}{x+1} \le\log\Bigl(n!\,2^{n+1}\frac{R}{R-1}\Bigr)+2R. $$ -/
 theorem expPoly_zero_count_scaled
     {l : ℕ} (q : Fin l → ℕ) (ω : Fin l → ℂ) (hω : Function.Injective ω)
     (b : (j : Fin l) → Fin (q j) → ℂ) (hb : ∃ j i, b j i ≠ 0)
     (z₀ : ℂ) (ρ : ℝ) (hρ : 0 ≤ ρ) (S : Finset ℂ) (hS : ∀ z ∈ S, ‖z - z₀‖ ≤ ρ)
     (hΩ : 0 < ⨆ j, ‖ω j‖) :
     ∀ R : ℝ, ρ * (⨆ j, ‖ω j‖) + 1 < R →
-      (∑ z ∈ S, (analyticOrderNatAt (fun w : ℂ => ∑ j, ∑ i : Fin (q j), b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z : ℝ))
+      (∑ z ∈ S, (analyticOrderNatAt (fun w : ℂ => ∑ j, ∑ i : Fin (q j),
+          b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z : ℝ))
           * Real.log ((R - ρ * (⨆ j, ‖ω j‖)) / (ρ * (⨆ j, ‖ω j‖) + 1))
         ≤ Real.log (((∑ j, q j).factorial : ℝ) * 2 ^ ((∑ j, q j) + 1) * R / (R - 1)) + 2 * R := by
   classical
@@ -54,7 +91,7 @@ theorem expPoly_zero_count_scaled
   let G : ℂ → ℂ := fun y => ∑ j, (P j).eval y * Complex.exp (w j * y)
   have hG : ∀ y, G y = f (z₀ + y / Ω) := by
     intro y
-    simp only [G, P, w, hfdef, eval_finset_sum, eval_mul, eval_C, eval_pow, eval_add, eval_X,
+    simp only [G, P, w, hfdef, eval_finsetSum, eval_mul, eval_C, eval_pow, eval_add, eval_X,
       Finset.sum_mul]
     refine Finset.sum_congr rfl (fun j _ => Finset.sum_congr rfl (fun i _ => ?_))
     rw [show ω j * (z₀ + y / Ω) = ω j * z₀ + ω j / Ω * y by ring, Complex.exp_add]
@@ -64,7 +101,7 @@ theorem expPoly_zero_count_scaled
     rw [this]
     exact hfdiff.comp ((differentiable_id.div_const _).const_add z₀)
   -- hypotheses of the lower bound
-  have hw : Function.Injective w := fun a c h => hω ((div_left_inj' hΩc).mp h)
+  have hw : Function.Injective w := fun a c h => hω ((div_left_inj₀ hΩc).mp h)
   have hwle : ∀ j, ‖w j‖ ≤ 1 := by
     intro j
     have hj : ‖ω j‖ ≤ Ω := le_ciSup (f := fun j => ‖ω j‖) (Finite.bddAbove_range _) j
@@ -125,12 +162,13 @@ theorem expPoly_zero_count_scaled
     exact hmax (by simpa [mem_sphere_iff_norm] using hz)
   have hMpos : 0 < M := by
     by_contra hle
-    push_neg at hle
+    push Not at hle
     have hball : ∀ z ∈ Metric.ball (0 : ℂ) R, G z = 0 := by
       intro z hz
       have := Complex.norm_le_of_forall_mem_frontier_norm_le Metric.isBounded_ball
         hGdiff.diffContOnCl (C := M)
-        (fun y hy => hM y (by rw [frontier_ball _ hR0.ne'] at hy; simpa [mem_sphere_iff_norm] using hy))
+        (fun y hy => hM y
+            (by rw [frontier_ball _ hR0.ne'] at hy; simpa [mem_sphere_iff_norm] using hy))
         (subset_closure hz)
       exact norm_le_zero_iff.mp (this.trans hle)
     have hev : G =ᶠ[nhds 0] 0 := by
@@ -163,7 +201,8 @@ theorem expPoly_zero_count_scaled
   -- the interpolation lower bound at the maximum point
   have h2 := expPoly_value_le_derivs q w hw P hP 1 R D zero_le_one hwle hR0.le hD u₀
     (by simpa [mem_sphere_iff_norm] using hu₀.le)
-  have h2' : M ≤ ((n.factorial : ℝ) * 2 ^ (n + 1) * (R / (R - 1)) * Real.exp (2 * R)) * r ^ σ * M := by
+  have h2' : M ≤ ((n.factorial : ℝ) * 2 ^ (n + 1) * (R / (R - 1)) * Real.exp (2 * R)) * r ^ σ * M :=
+      by
     have hnf : (n : ℝ) * ((n - 1).factorial : ℝ) = (n.factorial : ℝ) := by
       have : n * (n - 1).factorial = n.factorial := Nat.mul_factorial_pred (by omega)
       exact_mod_cast this
@@ -175,7 +214,7 @@ theorem expPoly_zero_count_scaled
       _ = _ := by rw [hnf]
   have hK : 1 ≤ ((n.factorial : ℝ) * 2 ^ (n + 1) * (R / (R - 1)) * Real.exp (2 * R)) * r ^ σ := by
     by_contra hlt
-    push_neg at hlt
+    push Not at hlt
     have := mul_lt_mul_of_pos_right hlt hMpos
     linarith
   -- take logarithms
@@ -191,7 +230,8 @@ theorem expPoly_zero_count_scaled
   have hsigma : (∑ z ∈ S, (analyticOrderNatAt f z : ℝ)) = (σ : ℝ) := by
     rw [hsum]; push_cast; rfl
   rw [hsigma]
-  have hKeq : (n.factorial : ℝ) * 2 ^ (n + 1) * (R / (R - 1)) = (n.factorial : ℝ) * 2 ^ (n + 1) * R / (R - 1) := by
+  have hKeq : (n.factorial : ℝ) * 2 ^ (n + 1) * (R / (R - 1)) = (n.factorial : ℝ) * 2 ^ (n + 1) * R
+      / (R - 1) := by
     ring
   rw [hKeq] at hlog
   rw [hlr] at hlog

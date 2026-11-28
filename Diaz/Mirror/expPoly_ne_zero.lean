@@ -1,18 +1,38 @@
 /-
-Mirrored from Prove2Me: `FourExp.expPoly_ne_zero`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.expPoly_ne_zero__143df69b.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/expPoly_ne_zero.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Complex.Polynomial.Basic
+public import Mathlib.RingTheory.SimpleRing.Principal
+public import Mathlib.Tactic.Push
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+public import Mathlib.Tactic.SplitIfs
+
+/-!
+# Distinct frequencies
+
+Let $\omega_1,\dots,\omega_l\in\mathbb{C}$ be pairwise distinct, let $q_1,\dots,q_l\in\mathbb{N}$,
+and let $b_{j,i}\in\mathbb{C}$ ($1\le j\le l$, $0\le i<q_j$) be not all zero. Then the function
+$$ f(z) =\sum_{j =1}^{l}\sum_{i =0}^{q_j-1}b_{j,i}\,z^{i}e^{\omega_jz} $$
+takes a non-zero value at some point of $\mathbb{C}$.
+
+Source: Classical; see [Tij71] or [Wal71, §4].
+
+## References
+
+* [Tij71] R. Tijdeman, Proc. Kon. Nederl. Akad. Wetensch. Ser. A 74 (= Indag. Math. 33) (1971), 1–7.
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/expPoly_ne_zero.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.expPoly_ne_zero`.
+-/
 
 @[expose] public section
 
@@ -62,16 +82,17 @@ theorem meas_derivative_lt {p : ℂ[X]} (hp : p ≠ 0) : meas (derivative p) < m
     omega
 
 /-- Polynomial form: `∑ Pⱼ(z) e^{ωⱼ z} ≡ 0` with distinct `ωⱼ` forces every `Pⱼ = 0`. -/
-theorem poly_form (ι : Type) [Fintype ι] [DecidableEq ι] :
+theorem poly_form (ι : Type) [Fintype ι] :
     ∀ n : ℕ, ∀ ω : ι → ℂ, Function.Injective ω → ∀ P : ι → ℂ[X],
       ∑ j, meas (P j) = n →
       (∀ z : ℂ, ∑ j, (P j).eval z * Complex.exp (ω j * z) = 0) → ∀ j, P j = 0 := by
+  classical
   intro n
   induction n using Nat.strong_induction_on with
   | _ n ih =>
   intro ω hω P hM hvan
   by_contra hne
-  push_neg at hne
+  push Not at hne
   obtain ⟨j₀, hj₀⟩ := hne
   set c : ι → ℂ := fun j => ω j - ω j₀ with hc
   set Q : ι → ℂ[X] := fun j => derivative (P j) + C (c j) * P j with hQ
@@ -144,24 +165,30 @@ theorem poly_form (ι : Type) [Fintype ι] [DecidableEq ι] :
 
 end FourExpE0
 
+/-- **Distinct frequencies.** Let $\omega_1,\dots,\omega_l\in\mathbb{C}$ be pairwise distinct, let
+$q_1,\dots,q_l\in\mathbb{N}$, and let $b_{j,i}\in\mathbb{C}$ ($1\le j\le l$, $0\le i<q_j$) be not
+all zero. Then the function
+$$ f(z) =\sum_{j =1}^{l}\sum_{i =0}^{q_j-1}b_{j,i}\,z^{i}e^{\omega_jz} $$
+takes a non-zero value at some point of $\mathbb{C}$. -/
 theorem expPoly_ne_zero
     {l : ℕ} (q : Fin l → ℕ) (ω : Fin l → ℂ) (hω : Function.Injective ω)
     (b : (j : Fin l) → Fin (q j) → ℂ) (hb : ∃ j i, b j i ≠ 0) :
     ∃ w : ℂ, ∑ j, ∑ i : Fin (q j), b j i * w ^ (i : ℕ) * Complex.exp (ω j * w) ≠ 0 := by
   classical
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   obtain ⟨j, i, hji⟩ := hb
   let P : Fin l → ℂ[X] := fun j => ∑ i : Fin (q j), C (b j i) * X ^ (i : ℕ)
   have hvan : ∀ z : ℂ, ∑ j, (P j).eval z * Complex.exp (ω j * z) = 0 := by
     intro z
     rw [← hcon z]
     refine Finset.sum_congr rfl (fun j _ => ?_)
-    simp only [P, eval_finset_sum, eval_mul, eval_C, eval_pow, eval_X, Finset.sum_mul]
+    simp only [P, eval_finsetSum, eval_mul, eval_C, eval_pow, eval_X, Finset.sum_mul]
   have hP := FourExpE0.poly_form (Fin l) _ ω hω P rfl hvan j
   have hc := congrArg (fun p => p.coeff (i : ℕ)) hP
-  simp only [P, finset_sum_coeff, coeff_C_mul_X_pow, coeff_zero] at hc
-  rw [Finset.sum_eq_single i (fun k _ hk => ite_eq_right (fun h => hk (Fin.ext h).symm)) (by simp)] at hc
+  simp only [P, finsetSum_coeff, coeff_C_mul_X_pow, coeff_zero] at hc
+  rw [Finset.sum_eq_single i (fun k _ hk => ite_eq_right (fun h => hk (Fin.ext h).symm))
+      (by simp)] at hc
   simp only [ite_true] at hc
   exact hji hc
 

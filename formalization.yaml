@@ -63,14 +63,17 @@ related_formalizations:
 - id: https://github.com/carlok/diaz-modulus-lean
   relationship: other
   note: The canonical home of these proofs, by the same author, and of a wider library on Diaz's conjecture.
-    This repository copies the import closure of the compared theorems (69 modules, at commit 59d5a598c2927b4100442a39f84c6841ebc5afa6)
-    with only the changes the Lean module system needs, so that they can be checked on their own.
-    The module paths and namespaces are those of the library. Corrections are made there first.
-- id: https://github.com/leanprover-community/mathlib4/pull/28013
-  relationship: other
-  note: The module Diaz.LindemannWeierstrass in this extract is ported from this unmerged Mathlib
-    pull request (Lindemann–Weierstrass), with credit to its authors. It lies in the import closure
-    through Diaz.Axioms; the compared theorems are not taken from it.
+    This repository copies the modules the compared theorems need (from commit 465147a3ec8b of the
+    library, on Lean and Mathlib v4.36.0), so that they can be checked on their own. The module paths
+    and namespaces are those of the library. The README lists the changes made since the commit
+    registered with Palomar (adc5d6e, on v4.35.0).
+- id: https://github.com/TauCetiProject/TauCeti
+  relationship: builds-on
+  note: A Lake dependency, pinned at commit 0642eae29e0a59ef798d04de325386445906e755. The extract
+    takes Hermite–Lindemann (TauCeti.transcendental_exp_of_isAlgebraic) and Schwarz's lemma with
+    prescribed zeros (TauCeti.norm_le_mul_prod_div_pow) from it. Up to the registered commit, the
+    extract instead carried a port of the Lindemann–Weierstrass development of the unmerged Mathlib
+    pull request #28013 and its own division by the zeros.
 - id: https://palomar-registry.org/entry?id=PALOMAR-2026-11-22-000020&version=1
   relationship: other
   note: The six exponentials theorem from the same library, registered separately by the same author
@@ -150,8 +153,11 @@ automation:
     - Claude Opus 5.5
     framework: Claude Code
     tool_setup: 'A Claude agent made this extract under Carlo Perassi''s direction: it copied the
-      69 modules of the import closure from diaz-modulus-lean, made the module-system changes, and
-      wrote Challenge.lean, Solution.lean, this file, the README and the CI workflow.'
+      modules of the import closure from diaz-modulus-lean, made the module-system changes, and
+      wrote Challenge.lean, Solution.lean, this file, the README and the CI workflow. After the
+      registered commit it moved the extract to Lean and Mathlib v4.36.0 and Tau Ceti, dropped
+      the modules the compared theorems do not use, and adapted the code to the Lean Pool
+      conventions (minimal imports, no option overrides, Mathlib''s standard linters).'
     cost:
       wall_time: not tracked
       spend_usd: not tracked
@@ -177,7 +183,7 @@ review:
   status: machine-checked; no human expert review of the Lean
   reviewers: []
   notes: 'Checks made: the Prove2Me platform checked and accepted the proofs when they were first
-    submitted, and diaz-modulus-lean builds them in CI with leanprover/lean4:v4.35.0 and Mathlib v4.35.0.
+    submitted, and diaz-modulus-lean builds them in CI with leanprover/lean4:v4.36.0 and Mathlib v4.36.0.
     This repository''s CI builds the extract, audits the axioms with #print axioms, and runs the toolchain''s
     lake comparator. No mathematician has reviewed the Lean code, and the Challenge statements have
     not been reviewed against the sources by anyone independent of their authors.'
@@ -199,6 +205,7 @@ alignment:
     module: Challenge
     status: proved
     note: Proved by the library theorem Diaz.two_algebraically_independent_of_exp_column.
-acknowledgements: 'The Mathlib community, for Lean 4 and Mathlib; the authors of Mathlib pull request
-  #28013 (Lindemann–Weierstrass), whose code is ported in the library; and the Prove2Me platform,
-  where the proofs were first submitted and checked.'
+acknowledgements: 'The Mathlib community, for Lean 4 and Mathlib; the Tau Ceti project, for
+  Hermite–Lindemann and Schwarz''s lemma; the authors of Mathlib pull request #28013
+  (Lindemann–Weierstrass), whose code is ported in the library and was used up to the registered
+  commit; and the Prove2Me platform, where the proofs were first submitted and checked.'

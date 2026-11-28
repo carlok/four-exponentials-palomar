@@ -1,18 +1,47 @@
 /-
-Mirrored from Prove2Me: `FourExp.dvd_of_small_values`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.dvd_of_small_values__34c4fce2.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/dvd_of_small_values.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Order.Star.Int
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.RingTheory.Polynomial.GaussLemma
+public import Mathlib.RingTheory.Polynomial.Resultant.Basic
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+public import Mathlib.Tactic.SplitIfs
+
+/-!
+# Small values force divisibility
+
+Let $P,Q\in\mathbb{Z}[X]$ with $Q$ irreducible, let $\alpha\in\mathbb{C}$, and let $H,h\ge1$ bound
+the absolute values of the coefficients of $P$ and of $Q$ respectively. Put $d=\deg P$ and
+$\delta=\deg Q$. If
+$$
+\bigl((1+|\alpha|)(d+\delta)\bigr)^{d+\delta}H^{\delta}h^{d}\bigl(|P(\alpha)|+|Q(\alpha)|\bigr)<1,
+$$
+then $Q$ divides $P$.
+
+Source: [Wal71, §3, (3.13)], citing [Lang66, Ch. V, §2].
+
+## References
+
+* [Lang66] S. Lang, *Introduction to Transcendental Numbers*, Addison-Wesley, 1966.
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/dvd_of_small_values.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.dvd_of_small_values`.
+-/
 
 @[expose] public section
 
@@ -56,6 +85,13 @@ lemma factorial_le_pow_pred (n : ℕ) (hn : 1 ≤ n) : n.factorial ≤ n ^ (n - 
 
 end FourExpRes
 
+/-- **Small values force divisibility.** Let $P,Q\in\mathbb{Z}[X]$ with $Q$ irreducible, let
+$\alpha\in\mathbb{C}$, and let $H,h\ge1$ bound the absolute values of the coefficients of $P$ and of
+$Q$ respectively. Put $d=\deg P$ and $\delta=\deg Q$. If
+$$
+\bigl((1+|\alpha|)(d+\delta)\bigr)^{d+\delta}H^{\delta}h^{d}\bigl(|P(\alpha)|+|Q(\alpha)|\bigr)<1,
+$$
+then $Q$ divides $P$. -/
 theorem dvd_of_small_values
     (P Q : Polynomial ℤ) (hQ : Irreducible Q) (α : ℂ) (H h : ℝ) (hH : 1 ≤ H) (hh : 1 ≤ h)
     (hPH : ∀ i : ℕ, |(P.coeff i : ℝ)| ≤ H) (hQh : ∀ i : ℕ, |(Q.coeff i : ℝ)| ≤ h)
@@ -80,7 +116,8 @@ theorem dvd_of_small_values
     have hQα : (2 : ℝ) ≤ ‖Polynomial.aeval α Q‖ := by
       rw [hQC, aeval_C, algebraMap_int_eq, eq_intCast, Complex.norm_intCast]
       exact_mod_cast hc2
-    have hf1 : (1 : ℝ) ≤ ((1 + ‖α‖) * ((P.natDegree + Q.natDegree : ℕ) : ℝ)) ^ (P.natDegree + Q.natDegree) := by
+    have hf1 : (1 : ℝ) ≤ ((1 + ‖α‖) * ((P.natDegree + Q.natDegree : ℕ) : ℝ)) ^ (P.natDegree +
+        Q.natDegree) := by
       rcases Nat.eq_zero_or_pos (P.natDegree + Q.natDegree) with h0 | hpos
       · rw [h0, pow_zero]
       · apply one_le_pow₀
@@ -105,7 +142,8 @@ theorem dvd_of_small_values
   have hprim : Q.IsPrimitive := hQ.isPrimitive hδ0
   set φ : ℤ →+* ℚ := Int.castRingHom ℚ with hφ
   have hinj : Function.Injective φ := Int.cast_injective
-  have hQ'irr : Irreducible (Q.map φ) := (IsPrimitive.Int.irreducible_iff_irreducible_map_cast hprim).mp hQ
+  have hQ'irr : Irreducible (Q.map φ) :=
+      (IsPrimitive.Int.irreducible_iff_irreducible_map_cast hprim).mp hQ
   have hndvd' : ¬ Q.map φ ∣ P.map φ :=
     fun hdiv => hndvd ((IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast Q P hprim).mpr hdiv)
   have hcop : IsCoprime (P.map φ) (Q.map φ) := ((hQ'irr.coprime_iff_not_dvd).mpr hndvd').symm
@@ -125,7 +163,7 @@ theorem dvd_of_small_values
   set v : degreeLT ℤ N := ⟨1, hv⟩ with hvdef
   set X := adjSylvester (m := d) (n := δ) P Q v with hXdef
   have hX : P * (X.2 : ℤ[X]) + Q * (X.1 : ℤ[X]) = C (P.resultant Q d δ) := by
-    have := congr(($(sylveserMap_comp_adjSylvester P Q (le_refl d) (le_refl δ)) v).1)
+    have := congr(($(sylvesterMap_comp_adjSylvester P Q (le_refl d) (le_refl δ)) v).1)
     simpa [Algebra.smul_def, hvdef] using this
   set A := P.sylvester Q d δ with hAdef
   -- column bounds for the Sylvester matrix
@@ -159,12 +197,13 @@ theorem dvd_of_small_values
       · subst hr
         rw [Matrix.updateRow_self]
         by_cases ht : t = i
-        · subst ht; simp; exact hc1 _
-        · simp [Pi.single_apply, ht]; linarith [hc1 t]
+        · subst ht; simpa using hc1 _
+        · simp [ht]; linarith [hc1 t]
       · rw [Matrix.updateRow_ne hr]; exact hcol r t)
     rwa [hprod] at hb
   -- coordinates of `X` are entries of the adjugate
-  have hrepr : ∀ j, (((degreeLT.basis ℤ d).prod (degreeLT.basis ℤ δ)).reindex finSumFinEquiv).repr X j
+  have hrepr : ∀ j, (((degreeLT.basis ℤ d).prod (degreeLT.basis ℤ δ)).reindex finSumFinEquiv).repr X
+      j
       = A.adjugate j ⟨0, hNpos⟩ := by
     intro j
     rw [hXdef, adjSylvester, Matrix.toLin_apply, Module.Basis.repr_sum_self]
@@ -180,7 +219,8 @@ theorem dvd_of_small_values
     intro k
     by_cases hk : k < d
     · have := hrepr (Fin.castAdd δ ⟨k, hk⟩)
-      simp only [Module.Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_castAdd, Module.Basis.prod_repr_inl,
+      simp only [Module.Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_castAdd,
+          Module.Basis.prod_repr_inl,
         degreeLT.basis_repr] at this
       rw [this]; exact hadj _ _
     · have hdeg : (X.1 : ℤ[X]).degree < d := mem_degreeLT.mp X.1.2
@@ -190,7 +230,8 @@ theorem dvd_of_small_values
     intro k
     by_cases hk : k < δ
     · have := hrepr (Fin.natAdd d ⟨k, hk⟩)
-      simp only [Module.Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_natAdd, Module.Basis.prod_repr_inr,
+      simp only [Module.Basis.repr_reindex_apply, finSumFinEquiv_symm_apply_natAdd,
+          Module.Basis.prod_repr_inr,
         degreeLT.basis_repr] at this
       rw [this]; exact hadj _ _
     · have hdeg : (X.2 : ℤ[X]).degree < δ := mem_degreeLT.mp X.2.2
@@ -223,7 +264,7 @@ theorem dvd_of_small_values
       = Polynomial.aeval α P * Polynomial.aeval α (X.2 : ℤ[X])
         + Polynomial.aeval α Q * Polynomial.aeval α (X.1 : ℤ[X]) := by
     have := congrArg (Polynomial.aeval α) hX
-    simp only [map_add, map_mul, aeval_C, algebraMap_int_eq, eq_intCast, map_intCast] at this
+    simp only [map_add, map_mul, eq_intCast, map_intCast] at this
     exact this.symm
   have hRnorm : (1 : ℝ) ≤ ‖((P.resultant Q d δ : ℤ) : ℂ)‖ := by
     rw [Complex.norm_intCast]; exact hRes1

@@ -1,19 +1,23 @@
 /-
-Mirrored from Prove2Me: `FourExp.exists_int_norm`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.exists_int_norm__8d3c8cdd.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_int_norm.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.AffineMonoid.Basic
+public import Mathlib.Algebra.AffineMonoid.UniqueSums
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Polynomial.OfFn
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Normed.Unbundled.RingSeminorm
+public import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
+public import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+public import Mathlib.Tactic.SplitIfs
 
 /-!
 # The norm of `Pol(ω, ω₁)` down to `ℚ(ω)`, with its size
@@ -33,11 +37,19 @@ is the determinant of the matrix `M` of multiplication by `Pol` on `ℤ[X][Y]/(Q
   at most `d! (b C)^d` and degree at most `d (e + C)`.
 * Value: since `v₀ = 1`, `P(ω) = det ψ(M) = Pol(ω, ω₁) ∑_j ω₁^j adj(ψ(M))_{j0}`, and each cofactor
   is at most `d! t^d` with `t = b C max(1, |ω|)^(e+C)`.
+
+From `Diaz/Mirror/exists_int_norm.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.exists_int_norm`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 open Polynomial
 
-namespace S7W3_exists_int_norm
+namespace ExistsIntNorm
 
 /-- Size of `p ∈ ℤ[X]`: some `ph ∈ ℕ[X]` majorizes `p` coefficientwise, with `ph(1) ≤ b` and
 `deg ph ≤ D`. -/
@@ -102,7 +114,7 @@ lemma sz1_self (p : ℤ[X]) : Sz1 p (∑ i ∈ p.support, (p.coeff i).natAbs) p.
     natDegree_sum_le_of_forall_le _ _ fun i hi =>
       (natDegree_monomial_le _).trans (le_natDegree_of_mem_supp i hi)⟩
   · rw [finsetSum_coeff]
-    simp only [coeff_monomial]
+    simp only [coeff_monomial_apply]
     rw [Finset.sum_ite_eq']
     split_ifs with h
     · exact le_rfl
@@ -183,10 +195,16 @@ lemma det_factor {d : ℕ} (hd : 0 < d) (A : Matrix (Fin d) (Fin d) ℂ) (v : Fi
     smul_eq_mul, hv0, mul_one] at h2
   exact h2.symm
 
-end S7W3_exists_int_norm
+end ExistsIntNorm
 
-open Polynomial S7W3_exists_int_norm
+open Polynomial ExistsIntNorm
 
+/-- **Norms down to $\Q(\omega)$.** Let $\omega,\omega_1\in\mathbb{C}$ and let
+$Q\in\mathbb{Z}[X][Y]$ be monic in $Y$ of degree $d$, with $Q(\omega,\omega_1)=0$ and minimal there.
+There is $c\in\mathbb{N}$ such that for every $A\in\mathbb{Z}[X][Y]$ of $Y$-degree less than $d$,
+length at most $b$ and $X$-degree at most $e$, with $A(\omega,\omega_1)\neq0$, there is a non-zero
+$P\in\mathbb{Z}[X]$ of length at most $(cb)^{d}$ and degree at most $d(e+c)$ with
+$$ |P(\omega)| \le|A(\omega,\omega_1)|\,\bigl(cb\max(1,|\omega|)^{e}\bigr)^{d}. $$ -/
 theorem exists_int_norm (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm : Q.Monic)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
     (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
@@ -225,11 +243,12 @@ theorem exists_int_norm (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm 
     conv_lhs => rw [Pol.as_sum_support_C_mul_X_pow, Finset.sum_mul, ← modByMonicHom_apply, map_sum]
     rw [finsetSum_coeff]
     refine Finset.sum_congr rfl fun n _ => ?_
-    rw [mul_assoc, ← pow_add, ← smul_eq_C_mul, map_smul, coeff_smul, smul_eq_mul,
+    rw [mul_assoc, ← pow_add, ← smul_eq_C_mul, map_smul, AddMonoidAlgebra.coeff_smul_apply,
+        smul_eq_mul,
       modByMonicHom_apply]
   have hMsz : ∀ j k : Fin d, Sz1 (M j k) (b * C) (e + C) := by
     intro j k
-    show Sz1 (((Pol * X ^ (k : ℕ)) %ₘ Q).coeff j) (b * C) (e + C)
+    change Sz1 (((Pol * X ^ (k : ℕ)) %ₘ Q).coeff j) (b * C) (e + C)
     rw [hMe]
     refine sz1_mono (sz1_sum _ _
       (fun n => (∑ i ∈ (Pol.coeff n).support, ((Pol.coeff n).coeff i).natAbs) * C)
@@ -257,13 +276,13 @@ theorem exists_int_norm (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm 
     have h1 := eval₂_eq_sum_fin ψ ω₁ (d := d)
       (natDegree_modByMonic_lt (Pol * X ^ (k : ℕ)) hQm hQ1)
     rw [eval₂_modByMonic_eq_self_of_root hQroot, eval₂_mul, eval₂_X_pow] at h1
-    show Matrix.vecMul v (M.map ψ) k = eval₂ ψ ω₁ Pol * ω₁ ^ (k : ℕ)
+    change Matrix.vecMul v (M.map ψ) k = eval₂ ψ ω₁ Pol * ω₁ ^ (k : ℕ)
     rw [h1]
     simp only [Matrix.vecMul, dotProduct, Matrix.map_apply]
     exact Finset.sum_congr rfl fun j _ => mul_comm _ _
   have hP0 : Pol ≠ 0 := by rintro rfl; exact hPol (eval₂_zero _ _)
   have hb : 1 ≤ b := by
-    show 0 < b
+    change 0 < b
     refine lt_of_lt_of_le ?_ hlen
     refine Finset.sum_pos (fun k hk => ?_) (nonempty_support_iff.2 hP0)
     exact Finset.sum_pos (fun i hi => Int.natAbs_pos.2 (mem_support_iff.1 hi))
@@ -316,7 +335,7 @@ theorem exists_int_norm (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm 
             rw [norm_mul]
             refine mul_le_mul ?_ (hadj j) (norm_nonneg _)
               (pow_nonneg (zero_le_one.trans (le_max_left _ _)) _)
-            show ‖ω₁ ^ (j : ℕ)‖ ≤ _
+            change ‖ω₁ ^ (j : ℕ)‖ ≤ _
             rw [norm_pow]
             exact (pow_le_pow_left₀ (norm_nonneg _) (le_max_right _ _) _).trans
               (pow_le_pow_right₀ (le_max_left _ _) j.2.le)

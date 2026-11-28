@@ -1,11 +1,11 @@
--- The library root of this extract: every module of the import closure.
+/-
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
+-/
 module
 
-public import Diaz.Axioms
-public import Diaz.Closure
 public import Diaz.HermiteLindemann
-public import Diaz.Instantiation
-public import Diaz.LindemannWeierstrass
 public import Diaz.Mirror.aux_linear_system
 public import Diaz.Mirror.aux_linear_system_column
 public import Diaz.Mirror.auxiliary_construction
@@ -64,9 +64,11 @@ public import Diaz.Mirror.two_algebraically_independent_of_exp_column
 public import Diaz.Mirror.zero_count_arith
 public import Diaz.Mirror.zero_count_arith_poly
 public import Diaz.Mirror.zero_count_degenerate
-public import Diaz.Model
-public import Diaz.Multipliers
-public import Diaz.Platform
-public import Diaz.Rigidity
-public import Diaz.SFE
-public import Diaz.Transfer
+
+/-!
+# The four exponentials theorem in transcendence degree one
+
+The library root of this extract of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean): every module that the three
+compared theorems need.
+-/

@@ -1,19 +1,43 @@
 /-
-Mirrored from Prove2Me: `FourExp.siegel_aux`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.siegel_aux__6edf2e47.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/siegel_aux.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.siegel_entrywise
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+
+/-!
+# Solving the system
+
+Let $\omega,\omega_1\in\mathbb{C}$ and $Q\in\mathbb{Z}[X][Y]$ with $d=\deg_YQ\ge1$, such that no
+non-zero $A\in\mathbb{Z}[X][Y]$ with $\deg_YA<d$ vanishes at $(\omega,\omega_1)$, and let
+$\kappa_1>0$. There is $\kappa\ge\kappa_1$ such that for every large $N$, every $M$ with
+$0<M\le\kappa_1S$, and every $R\times U$ integer matrix $B$ with $U=S(2N)^{2}Md$, $2R\le U$ and
+entries of absolute value at most $e^{\kappa_1N^{2}\sqrt{\log N}}$, there is an integer vector $q$
+with $Bq=0$ such that every $|q(i,j,h,\mu,\nu)|\le e^{\kappa N^{2}\sqrt{\log N}}$, some
+$c_q(i,j,h)\neq0$, and every $|c_q(i,j,h)|\le e^{\kappa N^{2}\sqrt{\log N}}$.
+
+Source: Siegel's lemma [Lang66, Ch. I, §2], as used in [Wal73, Lemme 4].
+
+## References
+
+* [Lang66] S. Lang, *Introduction to Transcendental Numbers*, Addison-Wesley, 1966.
+* [Wal73] M. Waldschmidt, *Solution du huitième problème de Schneider*, J. Number Theory 5 (1973),
+  191–202.
+
+From `Diaz/Mirror/siegel_aux.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.siegel_aux`.
+-/
 
 @[expose] public section
 
@@ -48,25 +72,45 @@ lemma c_ne_zero {ω ω₁ : ℂ} {Q : Polynomial (Polynomial ℤ)} (hQd : 0 < Q.
   funext μ ν
   have hc := congrArg (fun p : Polynomial (Polynomial ℤ) => (p.coeff ν).coeff μ) hP0
   simp only [P, f, finsetSum_coeff, coeff_C_mul_X_pow, coeff_zero, Fin.val_inj, Finset.sum_ite_eq,
-    Finset.sum_ite_eq', Finset.mem_univ, ite_true, coeff_monomial] at hc
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true, coeff_monomial_apply] at hc
   simpa using hc
 
 end FourExpSiegel
 
 open FourExpSiegel in
+/-- **Solving the system.** Let $\omega,\omega_1\in\mathbb{C}$ and $Q\in\mathbb{Z}[X][Y]$ with
+$d=\deg_YQ\ge1$, such that no non-zero $A\in\mathbb{Z}[X][Y]$ with $\deg_YA<d$ vanishes at
+$(\omega,\omega_1)$, and let $\kappa_1>0$. There is $\kappa\ge\kappa_1$ such that for every large
+$N$, every $M$ with $0<M\le\kappa_1S$, and every $R\times U$ integer matrix $B$ with
+$U=S(2N)^{2}Md$, $2R\le U$ and entries of absolute value at most $e^{\kappa_1N^{2}\sqrt{\log N}}$,
+there is an integer vector $q$ with $Bq=0$ such that every $|q(i,j,h,\mu,\nu)|\le e^{\kappa
+N^{2}\sqrt{\log N}}$, some $c_q(i,j,h)\neq0$, and every $|c_q(i,j,h)|\le e^{\kappa N^{2}\sqrt{\log
+N}}$. -/
 theorem siegel_aux
     (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQd : 0 < Q.natDegree)
-    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
+    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
     (κ₁ : ℝ) (hκ₁ : 0 < κ₁) :
     ∃ κ : ℝ, κ₁ ≤ κ ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
-      ∀ M : ℕ, 0 < M → (M : ℝ) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → ∀ R : ℕ, 2 * R ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree →
-      ∀ B : Fin R → Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-        (∀ e i j k' μ ν, |((B e i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ₁ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) →
-        ∃ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-          (∀ e, ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N), ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, B e i j k' μ ν * q i j k' μ ν = 0) ∧
-          (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-          (∃ i j k', (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' ≠ 0) ∧
-          (∀ i j k', ‖(fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k'‖ ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) := by
+      ∀ M : ℕ, 0 < M → (M : ℝ) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → ∀ R : ℕ,
+          2 * R ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M *
+              Q.natDegree →
+      ∀ B : Fin R → Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) →
+          Fin M → Fin Q.natDegree → ℤ,
+        (∀ e i j k' μ ν, |((B e i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ₁ * ((N : ℝ) ^ 2 *
+            Real.sqrt (Real.log (N : ℝ))))) →
+        ∃ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M
+            → Fin Q.natDegree → ℤ,
+          (∀ e, ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N),
+              ∑ k' : Fin (2 * N), ∑ μ : Fin M, ∑ ν : Fin Q.natDegree,
+                  B e i j k' μ ν * q i j k' μ ν = 0) ∧
+          (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 *
+              Real.sqrt (Real.log (N : ℝ))))) ∧
+          (∃ i j k', (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+              ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' ≠ 0) ∧
+          (∀ i j k', ‖(fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree,
+              ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k'‖ ≤ Real.exp (κ *
+                  ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) := by
   classical
   set W : ℝ := max 1 ‖ω‖ with hW
   set W₁ : ℝ := max 1 ‖ω₁‖ with hW₁
@@ -74,14 +118,16 @@ theorem siegel_aux
   have hW₁1 : 1 ≤ W₁ := le_max_left _ _
   have hdpos : (0 : ℝ) < Q.natDegree := by exact_mod_cast hQd
   refine ⟨κ₁ + 2, by linarith,
-    max 3 (max ⌈7776 * κ₁ * Q.natDegree⌉₊ (max ⌈W ^ (3 * κ₁)⌉₊ ⌈3 * Q.natDegree * Real.log W₁⌉₊)), ?_⟩
+    max 3 (max ⌈7776 * κ₁ * Q.natDegree⌉₊ (max ⌈W ^ (3 * κ₁)⌉₊ ⌈3 * Q.natDegree * Real.log W₁⌉₊)),
+        ?_⟩
   intro N hN M hM0 hMle R hR B hB
   -- thresholds
   have hN3 : (3 : ℝ) ≤ N := by
     have : 3 ≤ N := (le_max_left _ _).trans hN.le
     exact_mod_cast this
   have hT2 : 7776 * κ₁ * Q.natDegree ≤ (N : ℝ) := by
-    have : ⌈7776 * κ₁ * Q.natDegree⌉₊ ≤ N := ((le_max_left _ _).trans (le_max_right _ _)).trans hN.le
+    have : ⌈7776 * κ₁ * Q.natDegree⌉₊ ≤ N :=
+        ((le_max_left _ _).trans (le_max_right _ _)).trans hN.le
     exact (Nat.le_ceil _).trans (by exact_mod_cast this)
   have hT3 : W ^ (3 * κ₁) ≤ (N : ℝ) := by
     have : ⌈W ^ (3 * κ₁)⌉₊ ≤ N :=
@@ -97,32 +143,39 @@ theorem siegel_aux
     have := Real.exp_one_lt_d9
     linarith
   have hsL : 1 ≤ Real.sqrt (Real.log (N : ℝ)) := Real.one_le_sqrt.2 hL1
-  have hsq : Real.sqrt (Real.log (N : ℝ)) * Real.sqrt (Real.log (N : ℝ)) = Real.log (N : ℝ) := Real.mul_self_sqrt (by linarith)
+  have hsq : Real.sqrt (Real.log (N : ℝ)) * Real.sqrt (Real.log (N : ℝ)) = Real.log (N : ℝ) :=
+      Real.mul_self_sqrt (by linarith)
   have hN0 : (0 : ℝ) ≤ N := by linarith
   set A := (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)) with hA
   have hN2A : (N : ℝ) ^ 2 ≤ A := le_mul_of_one_le_right (by positivity) hsL
   have hA0 : 0 ≤ A := (by positivity : (0 : ℝ) ≤ (N : ℝ) ^ 2).trans hN2A
   have hNN2 : (N : ℝ) ≤ (N : ℝ) ^ 2 := by nlinarith
   -- sizes
-  have hSle : (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ : ℝ) ≤ (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ)) := Nat.floor_le (by positivity)
-  have hSle2 : (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ : ℝ) ≤ (N : ℝ) ^ 2 := hSle.trans (div_le_self (by positivity) hsL)
+  have hSle : (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ : ℝ) ≤ (N : ℝ) ^ 2 /
+      Real.sqrt (Real.log (N : ℝ)) := Nat.floor_le (by positivity)
+  have hSle2 : (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ : ℝ) ≤ (N : ℝ) ^ 2 :=
+      hSle.trans (div_le_self (by positivity) hsL)
   have hS1 : 1 ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ := by
     rw [Nat.one_le_floor_iff, one_le_div (by positivity)]
     have hLN : Real.log (N : ℝ) ≤ N := by
       have := Real.log_le_sub_one_of_pos (by linarith : (0 : ℝ) < N); linarith
     nlinarith
   have hMle2 : (M : ℝ) ≤ κ₁ * (N : ℝ) ^ 2 := hMle.trans (mul_le_mul_of_nonneg_left hSle2 hκ₁.le)
-  have hn : ((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree : ℕ) : ℝ) ≤ 4 * κ₁ * Q.natDegree * (N : ℝ) ^ 6 := by
+  have hn : ((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M *
+      Q.natDegree : ℕ) : ℝ) ≤ 4 * κ₁ * Q.natDegree * (N : ℝ) ^ 6 := by
     push_cast
-    calc (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ : ℝ) * (2 * N) * (2 * N) * M * Q.natDegree ≤ (N : ℝ) ^ 2 * (2 * N) * (2 * N) * (κ₁ * (N : ℝ) ^ 2) * Q.natDegree := by
+    calc (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ : ℝ) * (2 * N) * (2 * N) * M * Q.natDegree ≤
+           (N : ℝ) ^ 2 * (2 * N) * (2 * N) * (κ₁ * (N : ℝ) ^ 2) * Q.natDegree := by
           gcongr
       _ = 4 * κ₁ * Q.natDegree * (N : ℝ) ^ 6 := by ring
   have h8 : ((N : ℝ) ^ 2 / 3) ^ 4 / 24 ≤ Real.exp ((N : ℝ) ^ 2 / 3) := by
     have := Real.pow_div_factorial_le_exp (x := (N : ℝ) ^ 2 / 3) (by positivity) 4
     simpa [Nat.factorial] using this
-  have hnexp : ((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree : ℕ) : ℝ) ≤ Real.exp (A / 3) := by
+  have hnexp : ((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M *
+      Q.natDegree : ℕ) : ℝ) ≤ Real.exp (A / 3) := by
     have hN2big : 7776 * κ₁ * Q.natDegree ≤ (N : ℝ) ^ 2 := hT2.trans hNN2
-    calc ((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree : ℕ) : ℝ) ≤ 4 * κ₁ * Q.natDegree * (N : ℝ) ^ 6 := hn
+    calc ((⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M *
+           Q.natDegree : ℕ) : ℝ) ≤ 4 * κ₁ * Q.natDegree * (N : ℝ) ^ 6 := hn
       _ ≤ ((N : ℝ) ^ 2 / 3) ^ 4 / 24 := by
           have h6 : 0 ≤ (N : ℝ) ^ 6 := by positivity
           nlinarith
@@ -137,11 +190,14 @@ theorem siegel_aux
     apply Real.exp_le_exp.2
     have hMs : (M : ℝ) * Real.sqrt (Real.log (N : ℝ)) ≤ κ₁ * (N : ℝ) ^ 2 := by
       have := mul_le_mul_of_nonneg_right hMle (Real.sqrt_nonneg (Real.log (N : ℝ)))
-      calc (M : ℝ) * Real.sqrt (Real.log (N : ℝ)) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * Real.sqrt (Real.log (N : ℝ)) := this
-        _ ≤ κ₁ * ((N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) * Real.sqrt (Real.log (N : ℝ)) := by gcongr
+      calc (M : ℝ) * Real.sqrt (Real.log (N : ℝ)) ≤ κ₁ * ⌊(N : ℝ) ^ 2 /
+             Real.sqrt (Real.log (N : ℝ))⌋₊ * Real.sqrt (Real.log (N : ℝ)) := this
+        _ ≤ κ₁ * ((N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) * Real.sqrt (Real.log (N : ℝ)) :=
+            by gcongr
         _ = κ₁ * (N : ℝ) ^ 2 := by field_simp
     have key : (M : ℝ) * Real.log W * Real.log (N : ℝ) ≤ A / 3 * Real.log (N : ℝ) := by
-      calc (M : ℝ) * Real.log W * Real.log (N : ℝ) = (M * Real.sqrt (Real.log (N : ℝ))) * (Real.log W * Real.sqrt (Real.log (N : ℝ))) := by
+      calc (M : ℝ) * Real.log W * Real.log (N : ℝ) = (M * Real.sqrt (Real.log (N : ℝ))) *
+             (Real.log W * Real.sqrt (Real.log (N : ℝ))) := by
             rw [show (M : ℝ) * Real.log W * Real.log (N : ℝ) = (M : ℝ) * Real.log W *
               (Real.sqrt (Real.log (N : ℝ)) * Real.sqrt (Real.log (N : ℝ))) by rw [hsq]]
             ring
@@ -155,8 +211,10 @@ theorem siegel_aux
     apply Real.exp_le_exp.2
     linarith
   -- Siegel
-  let β := Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ × Fin (2 * N) × Fin (2 * N) × Fin M × Fin Q.natDegree
-  have hβcard : Fintype.card β = ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree := by
+  let β := Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ × Fin (2 * N) × Fin (2 *
+      N) × Fin M × Fin Q.natDegree
+  have hβcard : Fintype.card β = ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) *
+      M * Q.natDegree := by
     simp only [β, Fintype.card_prod, Fintype.card_fin]; ring
   have hβpos : 0 < Fintype.card β := by
     rw [hβcard]
@@ -175,7 +233,8 @@ theorem siegel_aux
     rw [hβcard]; exact hnexp
   have hfinal : Real.exp (A / 3) * K ≤ Real.exp ((κ₁ + 2) * A) := by
     rw [hK, ← Real.exp_add]; apply Real.exp_le_exp.2; linarith
-  refine ⟨fun i j k' μ ν => t (i, j, k', μ, ν), fun e => ?_, fun i j k' μ ν => (hqb _).trans hfinal, ?_, ?_⟩
+  refine ⟨fun i j k' μ ν => t (i, j, k', μ, ν), fun e => ?_, fun i j k' μ ν => (hqb _).trans hfinal,
+      ?_, ?_⟩
   · have := hts e
     simp only [β, Fintype.sum_prod_type] at this
     exact this
@@ -193,7 +252,8 @@ theorem siegel_aux
       have hω : ‖ω‖ ^ (μ : ℕ) ≤ W ^ M :=
         (pow_le_pow_left₀ (norm_nonneg _) (le_max_right _ _) _).trans (pow_le_pow_right₀ hW1 μ.2.le)
       have hω₁ : ‖ω₁‖ ^ (ν : ℕ) ≤ W₁ ^ Q.natDegree :=
-        (pow_le_pow_left₀ (norm_nonneg _) (le_max_right _ _) _).trans (pow_le_pow_right₀ hW₁1 ν.2.le)
+        (pow_le_pow_left₀ (norm_nonneg _) (le_max_right _ _) _).trans (pow_le_pow_right₀ hW₁1
+            ν.2.le)
       calc |((t (i, j, k', μ, ν) : ℤ) : ℝ)| * ‖ω‖ ^ (μ : ℕ) * ‖ω₁‖ ^ (ν : ℕ)
           ≤ (Real.exp (A / 3) * K) * W ^ M * W₁ ^ Q.natDegree := by gcongr; exact hqb _
         _ = Real.exp (A / 3) * K * (W ^ M * W₁ ^ Q.natDegree) := by ring
@@ -205,11 +265,15 @@ theorem siegel_aux
       have h1 : (1 : ℝ) ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) :=
         one_le_mul_of_one_le_of_one_le (one_le_mul_of_one_le_of_one_le hS1' h2N') h2N'
       calc (M : ℝ) * Q.natDegree = 1 * ((M : ℝ) * Q.natDegree) := by ring
-        _ ≤ (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N)) * ((M : ℝ) * Q.natDegree) :=
+        _ ≤ (⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N)) * ((M : ℝ) *
+            Q.natDegree) :=
             mul_le_mul_of_nonneg_right h1 (by positivity)
-        _ = ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree := by ring
-    calc ‖∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((t (i, j, k', μ, ν) : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)‖
-        ≤ ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ‖((t (i, j, k', μ, ν) : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)‖ :=
+        _ = ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree :=
+            by ring
+    calc ‖∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((t (i, j, k', μ, ν) : ℤ) : ℂ) * ω ^ (μ : ℕ) *
+           ω₁ ^ (ν : ℕ)‖
+        ≤ ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ‖((t (i, j, k', μ, ν) : ℤ) : ℂ) * ω ^ (μ : ℕ) *
+            ω₁ ^ (ν : ℕ)‖ :=
           (norm_sum_le _ _).trans (Finset.sum_le_sum fun μ _ => norm_sum_le _ _)
       _ ≤ ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, Real.exp (A / 3) * K * (W ^ M * W₁ ^ Q.natDegree) :=
           Finset.sum_le_sum fun μ _ => Finset.sum_le_sum fun ν _ => hterm μ ν

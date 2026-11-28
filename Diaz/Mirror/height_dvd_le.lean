@@ -1,15 +1,41 @@
 /-
-Mirrored from Prove2Me: `FourExp.height_dvd_le`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.height_dvd_le__979da6ca.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/height_dvd_le.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Analysis.Polynomial.MahlerMeasure
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.IntervalCases
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+
+/-!
+# Height of a divisor
+
+Let $P\in\mathbb{Z}[X]$ be non-zero and let $Q\in\mathbb{Z}[X]$ divide $P$. If every coefficient of
+$P$ has absolute value at most $H$, then every coefficient of $Q$ has absolute value at most
+$e^{\deg P}H$.
+
+Source: [Wal71, §3, Lemme 1] (Gel'fond; a generalisation of a lemma of Popken and Koksma).
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/height_dvd_le.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.height_dvd_le`.
+-/
 
 @[expose] public section
 
@@ -68,7 +94,8 @@ lemma choose_sqrt_le_exp (d δ i : ℕ) (hδ : δ ≤ d) :
           mul_le_mul_of_nonneg_right hc' (Real.sqrt_nonneg _)
       _ ≤ Real.exp (d : ℝ) := by rw [one_mul]; exact hs
   · have hc : ((δ.choose i : ℕ) : ℝ) ≤ 2 ^ d := by
-      have : δ.choose i ≤ 2 ^ d := (Nat.choose_le_two_pow δ i).trans (Nat.pow_le_pow_right (by norm_num) hδ)
+      have : δ.choose i ≤ 2 ^ d := (Nat.choose_le_two_pow δ i).trans (Nat.pow_le_pow_right (by
+          norm_num) hδ)
       exact_mod_cast this
     calc ((δ.choose i : ℕ) : ℝ) * Real.sqrt ((d : ℝ) + 1) ≤ 2 ^ d * (Real.exp 1 / 2) ^ d :=
           mul_le_mul hc (sqrt_le_pow d hd) (Real.sqrt_nonneg _) (by positivity)
@@ -77,6 +104,9 @@ lemma choose_sqrt_le_exp (d δ i : ℕ) (hδ : δ ≤ d) :
 
 end FourExpHeight
 
+/-- **Height of a divisor.** Let $P\in\mathbb{Z}[X]$ be non-zero and let $Q\in\mathbb{Z}[X]$ divide
+$P$. If every coefficient of $P$ has absolute value at most $H$, then every coefficient of $Q$ has
+absolute value at most $e^{\deg P}H$. -/
 theorem height_dvd_le
     (P Q : Polynomial ℤ) (hP : P ≠ 0) (hQP : Q ∣ P) (H : ℝ)
     (hPH : ∀ i : ℕ, |(P.coeff i : ℝ)| ≤ H) :
@@ -96,7 +126,8 @@ theorem height_dvd_le
     exact_mod_cast h1
   have hRM := one_le_mahlerMeasure_of_one_le_norm_leadingCoeff hRlc
   -- the coefficient bound through Mahler measure
-  have h1 := norm_coeff_le_choose_mul_mahlerMeasure_of_one_le_mahlerMeasure i (Q.map φ) (R.map φ) hRM
+  have h1 := norm_coeff_le_choose_mul_mahlerMeasure_of_one_le_mahlerMeasure i (Q.map φ) (R.map φ)
+      hRM
   have hcoef : ‖(Q.map φ).coeff i‖ = |(Q.coeff i : ℝ)| := by
     simp [hφ, coeff_map, Complex.norm_intCast]
   have hM := mahlerMeasure_le_sqrt_natDegree_add_one_mul_supNorm (Q.map φ * R.map φ)

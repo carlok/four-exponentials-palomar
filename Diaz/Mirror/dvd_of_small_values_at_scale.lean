@@ -1,16 +1,40 @@
 /-
-Mirrored from Prove2Me: `FourExp.dvd_of_small_values_at_scale`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.dvd_of_small_values_at_scale__9484d50c.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/dvd_of_small_values_at_scale.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.dvd_of_small_values
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
+
+/-!
+# Divisibility at one scale
+
+Let $\alpha\in\mathbb{C}$ and $\varepsilon>0$. There is $U$ such that for all real $u\ge U$ and
+$1\le v\le u$ the following holds. Let $P,Q\in\mathbb{Z}[X]$ with $Q$ irreducible, the coefficients
+of $P$ of absolute value at most $e^{u}$ and $\deg P\le v$, the coefficients of $Q$ of absolute
+value at most $e^{3u}$ and $\deg Q\le(1+\varepsilon/2)v$, and $|P(\alpha)|<e^{-(4+\varepsilon)uv}$,
+$|Q(\alpha)|<e^{-(4+\varepsilon)uv}$. Then $Q$ divides $P$.
+
+Source: A step of the proof of [Wal71, §3, Lemme fondamental].
+
+## References
+
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/dvd_of_small_values_at_scale.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.dvd_of_small_values_at_scale`.
+-/
 
 @[expose] public section
 
@@ -44,6 +68,11 @@ lemma log_small (B c : ℝ) (hB : 0 < B) (hc : 0 < c) :
 end FourExpDvdAtScale
 
 open FourExpDvdAtScale in
+/-- **Divisibility at one scale.** Let $\alpha\in\mathbb{C}$ and $\varepsilon>0$. There is $U$ such
+that for all real $u\ge U$ and $1\le v\le u$ the following holds. Let $P,Q\in\mathbb{Z}[X]$ with $Q$
+irreducible, the coefficients of $P$ of absolute value at most $e^{u}$ and $\deg P\le v$, the
+coefficients of $Q$ of absolute value at most $e^{3u}$ and $\deg Q\le(1+\varepsilon/2)v$, and
+$|P(\alpha)|<e^{-(4+\varepsilon)uv}$, $|Q(\alpha)|<e^{-(4+\varepsilon)uv}$. Then $Q$ divides $P$. -/
 theorem dvd_of_small_values_at_scale (α : ℂ) (ε : ℝ) (hε : 0 < ε) :
     ∃ U : ℝ, ∀ u v : ℝ, U ≤ u → 1 ≤ v → v ≤ u → ∀ P Q : ℤ[X], Irreducible Q →
       (∀ i, |(P.coeff i : ℝ)| ≤ Real.exp u) → (P.natDegree : ℝ) ≤ v →

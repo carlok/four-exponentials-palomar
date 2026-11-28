@@ -1,20 +1,41 @@
 /-
-Mirrored from Prove2Me: `FourExp.zero_count_arith_poly`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.zero_count_arith_poly__51f473e5.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/zero_count_arith_poly.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Push
+public import Mathlib.Tactic.Set
+
+/-!
+# Few zeros beat the bound
+
+For every integer $n\ge1$, real $x\ge0$ and $\lambda>0$, and every integer $0\le\sigma\le n-1$,
+$$ \sigma<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\,(1+x), $$
+where for $n=1$ the second term is read as $0$.
+
+Source: Elementary.
+
+From `Diaz/Mirror/zero_count_arith_poly.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.zero_count_arith_poly`.
+-/
 
 @[expose] public section
 
 namespace Diaz
 
+/-- **Few zeros beat the bound.** For every integer $n\ge1$, real $x\ge0$ and $\lambda>0$, and every
+integer $0\le\sigma\le n-1$,
+$$ \sigma<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\,(1+x), $$
+where for $n=1$ the second term is read as $0$. -/
 theorem zero_count_arith_poly
     (n : ℕ) (x lam : ℝ) (hx : 0 ≤ x) (hlam : 0 < lam) (σ : ℕ) (h : σ + 1 ≤ n) :
     (σ : ℝ) < (n : ℝ) / lam + 2 * (1 + (n : ℝ) ^ lam) / (lam * Real.log (n : ℝ)) * (1 + x) := by
@@ -30,7 +51,7 @@ theorem zero_count_arith_poly
       rw [le_div_iff₀ hlam]
       nlinarith
     linarith
-  · push_neg at hl
+  · push Not at hl
     rcases Nat.lt_or_ge n 2 with hn2 | hn2
     · have hn : n = 1 := by omega
       have hσ : σ = 0 := by omega

@@ -1,21 +1,21 @@
 /-
-Mirrored from Prove2Me: `FourExp.aux_linear_system`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.aux_linear_system__99ae5753.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/aux_linear_system.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_iteratedDeriv_reduced_presentation
 public import Diaz.Mirror.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.Order.Star.Int
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.Choose
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
 
 /-!
 # The auxiliary linear system of the four exponentials argument
@@ -31,7 +31,15 @@ depend on `q`. The equations of the system say that every coefficient of `∑ q_
 vanishes; then `F_q⁽ᵐ⁾(a y₁ + b y₂) = 0`. With `M = W S` the `X`-degrees stay below `2M`, so there
 are at most half as many equations as unknowns; and each coefficient of the system is at most the
 length of some `R_{ijkμν}`, hence at most `exp(κ N² √(log N))`.
+
+From `Diaz/Mirror/aux_linear_system.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.aux_linear_system`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 namespace AuxLinearSystem
 
@@ -52,24 +60,50 @@ end AuxLinearSystem
 
 open Polynomial
 
+/-- **The linear system.** Let $x_1,x_2,y_1,y_2\in\mathbb{C}$ have presentation data, and suppose
+every $e^{x_iy_j}$ is algebraic. There is $\kappa_1>0$ such that for every large $N$ there are an
+integer $M$ with $0<M\le\kappa_1S$ and an $R\times U$ integer matrix $B$, where $U=S(2N)^{2}Md$ and
+$2R\le U$, with entries of absolute value at most $e^{\kappa_1N^{2}\sqrt{\log N}}$, such that for
+every integer vector $q$ with $Bq=0$
+$$ F_q^{(m)}(ay_1+by_2)=0\qquad\text{for all }a<t_1,\ b<t_2,\ m<S. $$ -/
 theorem aux_linear_system
         (x₁ x₂ y₁ y₂ : ℂ)
-    (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁, y₂] j))) (ω ω₁ : ℂ) (hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm : Q.Monic) (hQd : 0 < Q.natDegree)
+    (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁,
+        y₂] j))) (ω ω₁ : ℂ) (_hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm :
+            Q.Monic) (_hQd : 0 < Q.natDegree)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
-    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
-    (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 → Polynomial (Polynomial ℤ))
-    (hD : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0) (hE : ∀ i, ![x₁, x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i))
-    (hG : ∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j))
-    (hH : ∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D = Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j)) :
+    (_hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
+    (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 →
+        Polynomial (Polynomial ℤ))
+    (hD : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0) (hE : ∀ i,
+        ![x₁, x₂] i * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+            Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (E i))
+    (hG : ∀ j, ![y₁, y₂] j * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (G j))
+    (hH : ∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) *
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D =
+            Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (H i j)) :
     ∃ κ₁ : ℝ, 0 < κ₁ ∧ ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
-      ∃ M : ℕ, 0 < M ∧ (M : ℝ) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ ∧ ∃ R : ℕ, 2 * R ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M * Q.natDegree ∧
-      ∃ B : Fin R → Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-        (∀ e i j k' μ ν, |((B e i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ₁ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-        ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-          (∀ e, ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N), ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, B e i j k' μ ν * q i j k' μ ν = 0) →
-          ∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
-            iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0 := by
+      ∃ M : ℕ, 0 < M ∧ (M : ℝ) ≤ κ₁ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ ∧ ∃ R : ℕ,
+          2 * R ≤ ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ * (2 * N) * (2 * N) * M *
+              Q.natDegree ∧
+      ∃ B : Fin R → Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) →
+          Fin M → Fin Q.natDegree → ℤ,
+        (∀ e i j k' μ ν, |((B e i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ₁ * ((N : ℝ) ^ 2 *
+            Real.sqrt (Real.log (N : ℝ))))) ∧
+        ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M
+            → Fin Q.natDegree → ℤ,
+          (∀ e, ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N),
+              ∑ k' : Fin (2 * N), ∑ μ : Fin M, ∑ ν : Fin Q.natDegree,
+                  B e i j k' μ ν * q i j k' μ ν = 0) →
+          ∀ a b m : ℕ, a < ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < ⌊(N : ℝ) *
+              Real.sqrt (Real.log (N : ℝ))⌋₊ → m < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
+            iteratedDeriv m (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+                ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0 := by
   classical
   -- The derivatives at the points `a y₁ + b y₂`, as values of polynomials reduced modulo `Q`.
   obtain ⟨c, hc⟩ := exists_iteratedDeriv_reduced_presentation x₁ x₂ y₁ y₂ hexp ω ω₁ Q
@@ -150,7 +184,7 @@ theorem aux_linear_system
     dsimp only
     generalize (Fintype.equivFinOfCardEq hcard).symm e = x
     obtain ⟨⟨a, ha⟩, ⟨b, hb⟩, ⟨m, hm⟩, ⟨h, hh⟩, ⟨r, hr⟩⟩ := x
-    show |((((R a b m i j k μ ν).coeff r).coeff h : ℤ) : ℝ)| ≤ _
+    change |((((R a b m i j k μ ν).coeff r).coeff h : ℤ) : ℝ)| ≤ _
     rw [← Int.cast_abs, Int.abs_eq_natAbs, Int.cast_natCast]
     have hA : (a : ℝ) ≤ ((2 : ℕ) : ℝ) * ((N : ℝ) / Real.sqrt (Real.log (N : ℝ))) := by
       have : (a : ℝ) ≤ t₁ := by exact_mod_cast ha.le
@@ -172,7 +206,8 @@ theorem aux_linear_system
       simp only [finsetSum_coeff, coeff_C_mul, coeff_zero]
       by_cases hr : r < Q.natDegree
       · by_cases hh : h < Dx + 1
-        · have := hq ((Fintype.equivFinOfCardEq hcard) (⟨a, ha⟩, ⟨b, hb⟩, ⟨m, hm⟩, ⟨h, hh⟩, ⟨r, hr⟩))
+        · have := hq ((Fintype.equivFinOfCardEq hcard) (⟨a, ha⟩, ⟨b, hb⟩, ⟨m, hm⟩, ⟨h, hh⟩, ⟨r,
+            hr⟩))
           simp only [Equiv.symm_apply_apply, Fin.val_mk] at this
           rw [← this]
           refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ =>

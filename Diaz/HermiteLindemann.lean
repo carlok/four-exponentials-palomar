@@ -1,48 +1,36 @@
 /-
-# Hermite–Lindemann, proved
-
-Backup of `DiazModulus.hermite_lindemann_holds`, Proved on Prove2Me, stated with
-the library's `HermiteLindemannProp`. The machinery lives in
-`Diaz.LindemannWeierstrass`; `Diaz.Axioms` proves the same theorem in contrapositive
-form, which is how the rest of the library consumes it.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/HermiteLindemann.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-public import Diaz.LindemannWeierstrass
-public import Diaz.Multipliers
+public import TauCeti.NumberTheory.Transcendental.Lindemann.Corollaries
+
+/-!
+# Hermite–Lindemann
+
+The library states the Hermite–Lindemann theorem as `Diaz.HermiteLindemannProp` and uses it as
+`Diaz.hermite_lindemann_holds`. The proof is Tau Ceti's
+`TauCeti.transcendental_exp_of_isAlgebraic`.
+
+From `Diaz/HermiteLindemann.lean` and `Diaz/Multipliers.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where the theorem is
+proved from a port of the Lindemann–Weierstrass development of Mathlib pull request #28013; Tau
+Ceti's proof replaces that port here.
+-/
 
 @[expose] public section
 
-open Complex ComplexConjugate
-open Finset
-open scoped Polynomial
-open MvPolynomial.symmetricSubalgebra
-open scoped AddMonoidAlgebra
-open Finset
-open Complex
-open Polynomial
-open scoped Nat
-open Complex Finset Polynomial
-
 namespace Diaz
 
-/-- **Hermite--Lindemann**, proved rather than assumed: for non-zero algebraic
-`a`, `exp a` is transcendental. This discharges the `Diaz.hermite_lindemann`
-form proved in `Diaz.Axioms` from the same machinery. -/
-theorem hermite_lindemann_holds : HermiteLindemannProp := by
-  intro a ha0 ha hexp
-  have h1 : IsIntegral ℚ a := isAlgebraic_iff_isIntegral.mp ha
-  have h2 : IsIntegral ℚ (Complex.exp a) := isAlgebraic_iff_isIntegral.mp hexp
-  refine by
-    simpa [Fin.forall_fin_succ] using
-      linearIndependent_exp' ![a, 0] ?_ ?_ ![1, -Complex.exp a] ?_ ?_
-  · intro i; fin_cases i
-    exacts [h1, isIntegral_zero]
-  · intro i j; fin_cases i, j <;> simp [ha0.symm, *]
-  · intro i; fin_cases i; exacts [isIntegral_one, h2.neg]
-  · simp
+/-- **Hermite–Lindemann**, as the library states it: for non-zero algebraic `a`, `exp a` is
+transcendental. -/
+def HermiteLindemannProp : Prop :=
+  ∀ a : ℂ, a ≠ 0 → IsAlgebraic ℚ a → Transcendental ℚ (Complex.exp a)
+
+/-- **Hermite–Lindemann** (Tau Ceti's `transcendental_exp_of_isAlgebraic`). -/
+theorem hermite_lindemann_holds : HermiteLindemannProp :=
+  fun _ ha0 ha => TauCeti.transcendental_exp_of_isAlgebraic ha ha0
 
 end Diaz

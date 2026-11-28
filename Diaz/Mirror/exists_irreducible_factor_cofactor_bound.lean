@@ -1,20 +1,17 @@
 /-
-Mirrored from Prove2Me: `Transcendence.exists_irreducible_factor_cofactor_bound`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/Transcendence.exists_irreducible_factor_cofactor_bound__dad2ad0a.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/exists_irreducible_factor_cofactor_bound.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.norm_resultant_le_max_norm_eval
-
-@[expose] public section
-
-namespace Transcendence
+public import Mathlib.Algebra.AffineMonoid.Basic
+public import Mathlib.Algebra.AffineMonoid.UniqueSums
+public import Mathlib.NumberTheory.MahlerMeasure
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # The cofactor of the smallest irreducible factor is not small
@@ -26,9 +23,17 @@ either is a constant, and then trivially satisfies the bound below, or is coprim
 `|Q(θ)| ≤ |T(θ)|`; the Liouville inequality through the resultant then bounds `|T(θ)|` from below.
 The bound is multiplicative in `T`, so it passes to `R`:
 `1 ≤ 2^(deg Q · deg R) · M(Q)^(deg R) · M(R)^(deg Q) · |R(θ)|`, with `M` the Mahler measure.
+
+From `Diaz/Mirror/exists_irreducible_factor_cofactor_bound.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `Transcendence.exists_irreducible_factor_cofactor_bound`.
 -/
 
-namespace S7W4_exists_irreducible_factor_cofactor_bound
+@[expose] public section
+
+namespace Transcendence
+
+namespace ExistsIrreducibleFactorCofactorBound
 
 open Polynomial
 
@@ -94,9 +99,13 @@ lemma good_of_not_dvd (Q T : ℤ[X]) (θ : ℂ) (hQ : Irreducible Q) (hQd : 0 < 
     natDegree_map_eq_of_injective Int.cast_injective, ← aeval_eq_eval_map, ← aeval_eq_eval_map,
     max_eq_right hmin] at hl
 
-end S7W4_exists_irreducible_factor_cofactor_bound
+end ExistsIrreducibleFactorCofactorBound
 
-open Polynomial S7W4_exists_irreducible_factor_cofactor_bound in
+open Polynomial ExistsIrreducibleFactorCofactorBound in
+/-- **The cofactor of an irreducible factor.** Let $P\in\mathbb{Z}[X]$ have positive degree and let
+$\theta\in\mathbb{C}$. Then $P=Q^{e}R$ with $Q,R\in\mathbb{Z}[X]$, $Q$ irreducible of positive
+degree, $e\ge1$, and
+$$ 1\le2^{\deg Q\deg R}M(Q)^{\deg R}M(R)^{\deg Q}|R(\theta)|. $$ -/
 theorem exists_irreducible_factor_cofactor_bound (P : Polynomial ℤ) (hP : 0 < P.natDegree)
     (θ : ℂ) :
     ∃ (Q R : Polynomial ℤ) (e : ℕ), Irreducible Q ∧ 0 < Q.natDegree ∧ 0 < e ∧ P = Q ^ e * R ∧

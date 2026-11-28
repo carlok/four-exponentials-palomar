@@ -1,22 +1,20 @@
 /-
-Mirrored from Prove2Me: `FourExp.transcendence_criterion_continuous`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.transcendence_criterion_continuous__41f98a19.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/transcendence_criterion_continuous.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
+public import Diaz.Mirror.dvd_of_small_values_at_scale
 public import Diaz.Mirror.height_dvd_le
 public import Diaz.Mirror.small_irreducible_factor
-public import Diaz.Mirror.dvd_of_small_values_at_scale
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.ByContra
+public import Mathlib.Tactic.Convert
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # A transcendence criterion with continuous scales
@@ -42,11 +40,19 @@ Suppose `α` is transcendental, and put `C = max (10 + ε) ((4 + ε) a₁ a₂)`
   (`dvd_of_small_values_at_scale`) gives `Q ∣ P_N`. Gel'fond's height bound
   (`height_dvd_le`) and `deg Q ≤ deg P_N ≤ v < (1 + ε/2) v` then make both bounds strict
   at `z`.
+
+From `Diaz/Mirror/transcendence_criterion_continuous.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.transcendence_criterion_continuous`.
 -/
+
+@[expose] public section
+
+namespace Diaz
 
 open Filter Topology Polynomial
 
-namespace W5_transcendence_criterion_continuous
+namespace TranscendenceCriterionContinuous
 
 /-- At a transcendental `α`, the non-zero integer polynomials of bounded degree and height take
 values bounded away from `0`: there are finitely many of them. -/
@@ -72,9 +78,17 @@ theorem exists_pos_le_norm_aeval (α : ℂ) (hα : Transcendental ℚ α) (D : �
   · exact ⟨_, (Finset.lt_inf'_iff hne).2 hval, fun Q h0 hD hK =>
       Finset.inf'_le _ (hfin.mem_toFinset.2 ⟨h0, hD, hK⟩)⟩
 
-end W5_transcendence_criterion_continuous
+end TranscendenceCriterionContinuous
 
-open W5_transcendence_criterion_continuous in
+open TranscendenceCriterionContinuous in
+/-- **The criterion for continuous growth functions.** Let $\alpha\in\mathbb{C}$ and
+$\varepsilon>0$. Let $\sigma_1,\sigma_2\colon\mathbb{R}\to\mathbb{R}$ be continuous, strictly
+increasing and tending to $+\infty$, and let $a_1,a_2\ge1$ be such that for every $x\ge1$
+$$ \sigma_2(x)\le\sigma_1(x),\qquad\sigma_i(x+1)\le a_i\,\sigma_i(x)\quad(i=1,2). $$
+Put $C=\max\{10+\varepsilon,(4+\varepsilon)a_1a_2\}$. Suppose that for every integer $N>N_0$ there
+is a non-zero $P_N\in\mathbb{Z}[X]$ with every coefficient of absolute value at most
+$e^{\sigma_1(N)}$, $\deg P_N\le\sigma_2(N)$ and $|P_N(\alpha)|<e^{-C\sigma_1(N)\sigma_2(N)}$. Then
+$\alpha$ is algebraic. -/
 theorem transcendence_criterion_continuous
     (α : ℂ) (ε : ℝ) (hε : 0 < ε)
     (σ₁ σ₂ : ℝ → ℝ) (hσ₁ : StrictMono σ₁) (hσ₂ : StrictMono σ₂)

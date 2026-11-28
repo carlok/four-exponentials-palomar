@@ -1,19 +1,41 @@
 /-
-Mirrored from Prove2Me: `FourExp.expPoly_zero_count`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.expPoly_zero_count__236257b1.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/expPoly_zero_count.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.expPoly_zero_count_scaled
-public import Diaz.Mirror.zero_count_degenerate
 public import Diaz.Mirror.zero_count_arith
 public import Diaz.Mirror.zero_count_arith_poly
+public import Diaz.Mirror.zero_count_degenerate
+public import Mathlib.Tactic.Push
+
+/-!
+# Zeros of an exponential polynomial in a disc
+
+Let $\omega_1,\dots,\omega_l\in\mathbb{C}$ be pairwise distinct, let $q_1,\dots,q_l\in\mathbb{N}$,
+and let $b_{j,i}\in\mathbb{C}$ ($1\le j\le l$, $0\le i<q_j$) be not all zero. Put
+$$ f(z) =\sum_{j =1}^{l}\sum_{i =0}^{q_j-1}b_{j,i}\,z^{i}e^{\omega_jz}, \qquad
+n=\sum_jq_j,\qquad\Omega=\max_j|\omega_j|. $$
+Let $z_0\in\mathbb{C}$, $\rho\ge0$ and $\lambda>0$. Then for every finite set $S$ of points of the
+disc $|z-z_0|\le\rho$
+$$ \sum_{z\in S}\operatorname{ord}_zf<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log
+n}\,(1+\rho\Omega), $$
+where for $n=1$ the second term is read as $0$. No separation between the $\omega_j$ is assumed.
+
+Source: [Wal71, §4, Lemme 3, (4.2)]; compare [Tij71].
+
+## References
+
+* [Tij71] R. Tijdeman, Proc. Kon. Nederl. Akad. Wetensch. Ser. A 74 (= Indag. Math. 33) (1971), 1–7.
+* [Wal71] M. Waldschmidt, *Indépendance algébrique des valeurs de la fonction exponentielle*, Bull.
+  Soc. Math. France 99 (1971), 285–304.
+
+From `Diaz/Mirror/expPoly_zero_count.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.expPoly_zero_count`.
+-/
 
 @[expose] public section
 
@@ -21,6 +43,16 @@ namespace Diaz
 
 open Finset
 
+/-- **Zeros of an exponential polynomial in a disc.** Let $\omega_1,\dots,\omega_l\in\mathbb{C}$ be
+pairwise distinct, let $q_1,\dots,q_l\in\mathbb{N}$, and let $b_{j,i}\in\mathbb{C}$ ($1\le j\le l$,
+$0\le i<q_j$) be not all zero. Put
+$$ f(z) =\sum_{j =1}^{l}\sum_{i =0}^{q_j-1}b_{j,i}\,z^{i}e^{\omega_jz}, \qquad
+n=\sum_jq_j,\qquad\Omega=\max_j|\omega_j|. $$
+Let $z_0\in\mathbb{C}$, $\rho\ge0$ and $\lambda>0$. Then for every finite set $S$ of points of the
+disc $|z-z_0|\le\rho$
+$$ \sum_{z\in S}\operatorname{ord}_zf<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log
+n}\,(1+\rho\Omega), $$
+where for $n=1$ the second term is read as $0$. No separation between the $\omega_j$ is assumed. -/
 theorem expPoly_zero_count
     {l : ℕ} (q : Fin l → ℕ) (ω : Fin l → ℂ) (hω : Function.Injective ω)
     (b : (j : Fin l) → Fin (q j) → ℂ) (hb : ∃ j i, b j i ≠ 0)
@@ -37,13 +69,14 @@ theorem expPoly_zero_count
   have hcast : (∑ z ∈ S, (analyticOrderNatAt
       (fun w : ℂ => ∑ j, ∑ i : Fin (q j), b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z : ℝ))
       = ((∑ z ∈ S, analyticOrderNatAt
-      (fun w : ℂ => ∑ j, ∑ i : Fin (q j), b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z : ℕ) : ℝ) := by
+      (fun w : ℂ => ∑ j, ∑ i : Fin (q j),
+          b j i * w ^ (i : ℕ) * Complex.exp (ω j * w)) z : ℕ) : ℝ) := by
     push_cast; rfl
   by_cases hdeg : (∑ j, q j) ≤ 1 ∨ (⨆ j, ‖ω j‖) = 0
   · have h1 := zero_count_degenerate q ω hω b hb S hdeg
     rw [hcast]
     exact zero_count_arith_poly (∑ j, q j) (ρ * ⨆ j, ‖ω j‖) lam hx hlam _ h1
-  · push_neg at hdeg
+  · push Not at hdeg
     obtain ⟨hn, hΩ⟩ := hdeg
     have hΩpos : 0 < ⨆ j, ‖ω j‖ := lt_of_le_of_ne hΩ0 (Ne.symm hΩ)
     have h2 := expPoly_zero_count_scaled q ω hω b hb z₀ ρ hρ S hS hΩpos

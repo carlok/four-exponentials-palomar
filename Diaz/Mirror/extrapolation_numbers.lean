@@ -1,19 +1,21 @@
 /-
-Mirrored from Prove2Me: `FourExp.extrapolation_numbers`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.extrapolation_numbers__4a95e926.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/extrapolation_numbers.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
-
-@[expose] public section
-
-namespace Diaz
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.LinearCombination
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Set
 
 /-!
 # The numerical inequality of the extrapolation step
@@ -24,8 +26,21 @@ so `(N - 1)^(-t₁ t₂ S) ≤ e^(-N U / 16)`. Every other factor is at most an 
 `s! ≤ S^S ≤ e^(2 A)`, `2 ≤ e`, `S (2N)² ≤ 4 N⁴ ≤ e^(7 U)`, the factor `e^(κ A)`,
 `(Y A)^S ≤ e^((log Y + 3) A)` and `e^(2 N X Y A) = e^(2 X Y U)`. With `A ≤ U` and `U ≥ 1` the
 total exponent is at most `-N U / 16 + (13 + κ + log Y + 2 X Y) U ≤ -N U / 32 = -N⁴ q / 32`.
+
+From `Diaz/Mirror/extrapolation_numbers.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.extrapolation_numbers`.
 -/
 
+@[expose] public section
+
+namespace Diaz
+
+/-- **The numbers of the extrapolation.** Let $X\ge0$, $Y\ge1$ and $\kappa\ge0$ be real, and let
+$N,S,t_1,t_2,s$ be natural numbers with $s\le S$ and $N\ge32(13+\kappa+\log Y+2XY)$. Write
+$w=\sqrt{\log N}$ and suppose $Sw\le N^{2}\le2Sw$, $N\le2t_1w$ and $Nw\le2t_2$. Then
+$$ 2\,s!\,(N-1)^{-t_1t_2S}\cdot S(2N)^{2}e^{\kappa N^{2}w}\,(YN^{2}w)^{S}\,e^{2NX\cdot YN^{2}w}\le
+e^{-N^{4}w/32}. $$ -/
 theorem extrapolation_numbers (X Y κ : ℝ) (hX : 0 ≤ X) (hY : 1 ≤ Y) (hκ : 0 ≤ κ)
     (N S t₁ t₂ s : ℕ) (hbig : 32 * (13 + κ + Real.log Y + 2 * X * Y) ≤ N) (hs : s ≤ S)
     (hSu : (S : ℝ) * Real.sqrt (Real.log N) ≤ (N : ℝ) ^ 2)
@@ -70,7 +85,8 @@ theorem extrapolation_numbers (X Y κ : ℝ) (hX : 0 ≤ X) (hY : 1 ≤ Y) (hκ 
   -- (1) `s! ≤ S ^ S ≤ exp (2 A)`
   have e1 : (s.factorial : ℝ) ≤ Real.exp (2 * A) := by
     have hnat : s.factorial ≤ S ^ S :=
-      (Nat.factorial_le_pow s).trans ((Nat.pow_le_pow_left hs s).trans (Nat.pow_le_pow_right hS1 hs))
+      (Nat.factorial_le_pow s).trans ((Nat.pow_le_pow_left hs s).trans (Nat.pow_le_pow_right hS1
+          hs))
     refine (show (s.factorial : ℝ) ≤ (S : ℝ) ^ S by exact_mod_cast hnat).trans ?_
     rw [← Real.exp_log (by linarith : (0 : ℝ) < S), ← Real.exp_nat_mul]
     have := Real.log_le_log (by linarith) hSN
@@ -117,7 +133,8 @@ theorem extrapolation_numbers (X Y κ : ℝ) (hX : 0 ≤ X) (hY : 1 ≤ Y) (hκ 
         gcongr
         · exact pow_nonneg (div_nonneg zero_le_one (by linarith)) _
         · linarith [Real.add_one_le_exp 1]
-    _ = Real.exp (2 * A + 1 + -(N * U / 16) + (7 * U + κ * A + (Real.log Y + 3) * A + 2 * X * Y * U)) := by
+    _ = Real.exp (2 * A + 1 + -(N * U / 16) + (7 * U + κ * A + (Real.log Y + 3) * A + 2 * X * Y *
+        U)) := by
         simp only [Real.exp_add]
     _ ≤ Real.exp (-((N : ℝ) ^ 4 * q / 32)) := by
         refine Real.exp_le_exp.2 ?_

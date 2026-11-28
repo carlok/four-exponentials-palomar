@@ -1,26 +1,21 @@
 /-
-Mirrored from Prove2Me: `FourExp.norm_to_polynomial_alg_column`.
-
-Ported mechanically from the accepted submission archived as
-`archive/prove2me/FourExp.norm_to_polynomial_alg_column__a6b6b59b.lean`. Statement and proof are the platform's; only
-imports, namespaces and the theorem's name were rewritten.
-Names and spellings that changed between the platform's Mathlib revision and the one
-pinned here were updated to match, and proof steps that became no-ops there were
-dropped; the mathematics is unchanged.
+Copyright (c) 2026 Carlo Perassi. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Carlo Perassi
 -/
--- Origin: `Diaz/Mirror/norm_to_polynomial_alg_column.lean` in https://github.com/carlok/diaz-modulus-lean at 59d5a598c292
--- (Apache-2.0), unchanged except for what the Lean module system needs.
 module
 
-public import Mathlib
 public import Diaz.Mirror.exists_int_norm
 public import Diaz.Mirror.exists_pow_mul_pow_le_exp_sq_mul_sqrt_log
-public import Diaz.Mirror.length_sum_le
 public import Diaz.Mirror.length_mul_le
-
-@[expose] public section
-
-namespace Diaz
+public import Diaz.Mirror.length_sum_le
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Tactic.Bound
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.GCongr
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
 
 /-!
 # A small non-zero derivative gives an integer polynomial that is small at `ω`, in the column case
@@ -44,9 +39,17 @@ If `F_q⁽ᵐ⁾(a y₁ + b y₂) ≠ 0`, the norm of `φ(Pol)` down to `ℚ(ω)
 `|P(ω)| ≤ |φ(Pol)| (c₁ e^(β A) max(1, |ω|)^e)^d`. One constant `k` bounds the three exponents.
 So `|P(ω)| ≤ e^(k A - N⁴ s / κ')` when `|F_q⁽ᵐ⁾(a y₁ + b y₂)| ≤ e^(-N⁴ s / κ')`, and this is below
 `e^(-C (k A) (k B)) = e^(-C k² N⁴)` as soon as `s ≥ 2 κ' (|C| k² + k + 1)`.
+
+From `Diaz/Mirror/norm_to_polynomial_alg_column.lean` of
+[diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
+proof accepted on Prove2Me as `FourExp.norm_to_polynomial_alg_column`.
 -/
 
-namespace T2_norm_to_polynomial_alg_column
+@[expose] public section
+
+namespace Diaz
+
+namespace NormToPolynomialAlgColumn
 
 open Polynomial
 
@@ -58,7 +61,8 @@ lemma norm_to_polynomial_alg_column_natAbs_coeff_le (P : Polynomial ℤ) (i : �
   · rw [notMem_support_iff.1 hi]; simp
 
 /-- Multiplying by an integer `a` multiplies the length by `|a|` at most. -/
-lemma norm_to_polynomial_alg_column_length_C_C_mul_le {a : ℤ} {P : Polynomial (Polynomial ℤ)} {x y : ℝ} (ha : |(a : ℝ)| ≤ x)
+lemma norm_to_polynomial_alg_column_length_C_C_mul_le {a : ℤ} {P : Polynomial (Polynomial ℤ)} {x y :
+    ℝ} (ha : |(a : ℝ)| ≤ x)
     (hP : ((∑ k ∈ P.support, ∑ i ∈ (P.coeff k).support, ((P.coeff k).coeff i).natAbs : ℕ) : ℝ)
       ≤ y) :
     ((∑ k ∈ (C (C a) * P).support, ∑ i ∈ ((C (C a) * P).coeff k).support,
@@ -76,7 +80,8 @@ lemma norm_to_polynomial_alg_column_length_C_C_mul_le {a : ℤ} {P : Polynomial 
   exact mul_le_mul ha hP (Nat.cast_nonneg _) ((abs_nonneg _).trans ha)
 
 /-- The length of a sum is at most the number of terms times a bound on their lengths. -/
-lemma norm_to_polynomial_alg_column_length_sum_le {ι : Type*} (s : Finset ι) (f : ι → Polynomial (Polynomial ℤ)) (B : ℝ)
+lemma norm_to_polynomial_alg_column_length_sum_le {ι : Type*} (s : Finset ι) (f : ι →
+    Polynomial (Polynomial ℤ)) (B : ℝ)
     (h : ∀ i ∈ s, ((∑ k ∈ (f i).support, ∑ j ∈ ((f i).coeff k).support,
       (((f i).coeff k).coeff j).natAbs : ℕ) : ℝ) ≤ B) :
     ((∑ k ∈ (∑ i ∈ s, f i).support, ∑ j ∈ ((∑ i ∈ s, f i).coeff k).support,
@@ -86,16 +91,22 @@ lemma norm_to_polynomial_alg_column_length_sum_le {ι : Type*} (s : Finset ι) (
   exact (Finset.sum_le_sum h).trans (by rw [Finset.sum_const, nsmul_eq_mul])
 
 /-- For `A ≥ 1`, a nonnegative `x` is at most `e^(x A)`. -/
-lemma norm_to_polynomial_alg_column_le_exp_mul {x A : ℝ} (hx : 0 ≤ x) (hA : 1 ≤ A) : x ≤ Real.exp (x * A) := by
+lemma norm_to_polynomial_alg_column_le_exp_mul {x A : ℝ} (hx : 0 ≤ x) (hA : 1 ≤ A) : x ≤ Real.exp (x
+    * A) := by
   nlinarith [Real.add_one_le_exp (x * A), mul_le_mul_of_nonneg_left hA hx]
 
-end T2_norm_to_polynomial_alg_column
+end NormToPolynomialAlgColumn
 
-open Polynomial T2_norm_to_polynomial_alg_column in
+open Polynomial NormToPolynomialAlgColumn in
+/-- **A small polynomial, one algebraic column.** Let $x_1,x_2,y_1,y_2,\omega,\omega_1\in\mathbb{C}$
+and let $Q\in\mathbb{Z}[X][Y]$ be monic in $Y$ with $Q(\omega,\omega_1)=0$ and minimal there, and
+suppose that the derivatives of the functions $F_q$ have reduced presentations as in the conclusion
+of Lemma . Then the conclusion of Lemma holds. -/
 theorem norm_to_polynomial_alg_column
     (x₁ x₂ y₁ y₂ : ℂ) (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm : Q.Monic)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
-    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree → Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
+    (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
+        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
     (hpres : ∃ c : ℕ, ∀ S T M a b m : ℕ, ∃ Λ : ℂ, Λ ≠ 0 ∧
       ‖Λ‖ ≤ (c : ℝ) ^ (c * (1 + m + S + T * (a + b))) ∧
       ∃ R : Fin S → Fin T → Fin T → Fin M → Fin Q.natDegree → Polynomial (Polynomial ℤ),
@@ -116,18 +127,32 @@ theorem norm_to_polynomial_alg_column
     (κ κ' : ℝ) (hκ : 0 < κ) (hκ' : 0 < κ') :
     ∃ k : ℝ, 0 < k ∧ ∀ C : ℝ, ∃ N₀ : ℕ, ∀ N : ℕ, N₀ < N →
       ∀ M : ℕ, (M : ℝ) ≤ κ * ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ →
-      ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M → Fin Q.natDegree → ℤ,
-      (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) →
-      ∀ a b s : ℕ, a < 14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < 14 * ⌊(N : ℝ) * Real.sqrt (Real.log (N : ℝ))⌋₊ → s < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2 →
-      iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 →
-      ‖iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊, ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
-              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) * ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂)‖
+      ∀ q : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ → Fin (2 * N) → Fin (2 * N) → Fin M →
+          Fin Q.natDegree → ℤ,
+      (∀ i j k' μ ν, |((q i j k' μ ν : ℤ) : ℝ)| ≤ Real.exp (κ * ((N : ℝ) ^ 2 *
+          Real.sqrt (Real.log (N : ℝ))))) →
+      ∀ a b s : ℕ, a < 14 * ⌊(N : ℝ) / Real.sqrt (Real.log (N : ℝ))⌋₊ → b < 14 * ⌊(N : ℝ) *
+          Real.sqrt (Real.log (N : ℝ))⌋₊ → s < ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊ / 2 →
+      iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+          ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 →
+      ‖iteratedDeriv s (fun z : ℂ => ∑ i : Fin ⌊(N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))⌋₊,
+          ∑ j : Fin (2 * N), ∑ k' : Fin (2 * N),
+              (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
+                  ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
+                      x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂)‖
           ≤ Real.exp (-(((N : ℝ) ^ 4 * Real.sqrt (Real.log (N : ℝ))) / κ')) →
       ∃ P : Polynomial ℤ, P ≠ 0 ∧
-        (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 * Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-        (P.natDegree : ℝ) ≤ k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) ∧
-        ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 * Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)))) * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ)))))) := by
+        (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
+            Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
+        (P.natDegree : ℝ) ≤ k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 /
+            Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) ∧
+        ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
+            Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)))) * (k *
+                (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 /
+                    Real.sqrt (Real.log (N : ℝ)))))) := by
   -- The presentation of the derivatives, the norm down to `ℚ(ω)`, and the growth bound for
   -- the grid `T ≤ 14 N`.
   obtain ⟨c, hc⟩ := hpres
@@ -234,9 +259,13 @@ theorem norm_to_polynomial_alg_column
       ((Pol.coeff k).coeff i).natAbs = lP := ⟨_, rfl⟩
   have hlPe : (lP : ℝ) ≤ Real.exp (β * A) := by
     rw [← hlP, hPol]
-    refine (norm_to_polynomial_alg_column_length_sum_le _ _ _ fun i _ => norm_to_polynomial_alg_column_length_sum_le _ _ _ fun j _ =>
-      norm_to_polynomial_alg_column_length_sum_le _ _ _ fun k' _ => norm_to_polynomial_alg_column_length_sum_le _ _ _ fun μ _ => norm_to_polynomial_alg_column_length_sum_le _ _ _ fun ν _ =>
-      norm_to_polynomial_alg_column_length_C_C_mul_le (hqq i j k' μ ν) ((Nat.cast_le.2 (hRl i j k' μ ν)).trans hL5)).trans ?_
+    refine (norm_to_polynomial_alg_column_length_sum_le _ _ _ fun i _ =>
+        norm_to_polynomial_alg_column_length_sum_le _ _ _ fun j _ =>
+      norm_to_polynomial_alg_column_length_sum_le _ _ _ fun k' _ =>
+          norm_to_polynomial_alg_column_length_sum_le _ _ _ fun μ _ =>
+              norm_to_polynomial_alg_column_length_sum_le _ _ _ fun ν _ =>
+      norm_to_polynomial_alg_column_length_C_C_mul_le (hqq i j k' μ ν) ((Nat.cast_le.2 (hRl i j k' μ
+          ν)).trans hL5)).trans ?_
     simp only [Finset.card_univ, Fintype.card_fin]
     push_cast
     have hN6 : (N : ℝ) ^ 6 ≤ Real.exp (6 * A) := by
@@ -262,7 +291,8 @@ theorem norm_to_polynomial_alg_column
       mul_le_mul_of_nonneg_left hNa hc0]
   have hX : ((c₁ * lP : ℕ) : ℝ) ≤ Real.exp ((c₁ + β) * A) := by
     rw [Nat.cast_mul, add_mul, Real.exp_add]
-    exact mul_le_mul (norm_to_polynomial_alg_column_le_exp_mul (Nat.cast_nonneg _) hA1) hlPe (Nat.cast_nonneg _)
+    exact mul_le_mul (norm_to_polynomial_alg_column_le_exp_mul (Nat.cast_nonneg _) hA1) hlPe
+        (Nat.cast_nonneg _)
       (Real.exp_pos _).le
   have hd0 : (0 : ℝ) ≤ Q.natDegree := Nat.cast_nonneg _
   refine ⟨P, hP0, fun i => ?_, ?_, ?_⟩
