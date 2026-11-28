@@ -15,17 +15,16 @@ public import Mathlib.Tactic.FunProp
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.SplitIfs
 public import Diaz.Mirror.presentation_size
+public import Diaz.Mirror.exists_iteratedDeriv_presentation_of_exp_factor
 
 /-!
 # Integer presentations of the derivatives of the auxiliary exponential polynomial
 
 Write `φ(P) = P(ω, ω₁)` for `P ∈ ℤ[X][Y]`, `δ = φ(D)`, `β = j x₁ + k x₂` and `ζ = a y₁ + b y₂`.
 
-* **Leibniz.** `(z^i e^(βz))⁽ᵐ⁾(ζ) = ∑_{l ≤ m} C(m,l) i(i-1)⋯(i-l+1) ζ^(i-l) β^(m-l) e^(βζ)`,
-  and the `m`-th derivative is linear in the coefficients `f_{ijk}`.
-* **Polynomial factors.** Since `δβ = φ(j E₀ + k E₁)` and `δζ = φ(a G₀ + b G₁)`, for `l ≤ i < S`
-  the number `δ^(m+S) ζ^(i-l) β^(m-l)` is `φ` of
-  `D^l (j E₀ + k E₁)^(m-l) (a G₀ + b G₁)^(i-l) D^(S-i+l)`. For `l > i` the Leibniz term vanishes.
+The Leibniz expansion of the derivatives and the presentation of each of its terms are
+`exists_iteratedDeriv_presentation_of_exp_factor`, which needs only a presented exponential factor.
+
 * **Exponential factor.** `e^(βζ) = α₀₀^(ja) α₀₁^(jb) α₁₀^(ka) α₁₁^(kb)` with `α_{pq} = e^(x_p y_q)`
   algebraic. For each `α_{pq}` there are `ℓ`, `A` and an integer `L ≠ 0` with
   `Lⁿ αⁿ = ∑_{t<ℓ} r_t α^t` and `|r_t| ≤ Aⁿ`. As `δα = φ(H)`, the number
@@ -33,14 +32,13 @@ Write `φ(P) = P(ω, ω₁)` for `P ∈ ℤ[X][Y]`, `δ = φ(D)`, `β = j x₁ +
   of length at most `|L|^(N-n) ℓ Aⁿ c^(ℓ-1)` and degrees at most `(ℓ-1) c`, where `c` bounds the
   data. With `N = T(a+b)` the four factors present `Λ' e^(βζ)`, `Λ' = ∏ δ^(ℓ_{pq}-1) L_{pq}^N`,
   and `Λ = δ^(m+S) Λ'`.
-* **Sizes.** Lengths are controlled by `len(PQ) ≤ len(P) len(Q)` and `len(∑ Pᵢ) ≤ ∑ len(Pᵢ)`; the
-  degrees in `X` and `Y` add up under products. The lengths of the `P_{ijk}` are at most
-  `K^(4m+S) W^(4(N+1))` with `K = 2(1+m+S+T+a+b)c` and `W` depending only on the data, and their
-  degrees at most `(2m+S)c + 4W`.
+* **Sizes.** The factor has length at most `W^(4(N+1))` and degrees at most `4W`, with `W`
+  depending only on the data, which gives the bounds of the statement.
 
 From `Diaz/Mirror/exists_iteratedDeriv_presentation.lean` of
 [diaz-modulus-lean](https://github.com/carlok/diaz-modulus-lean) at `465147a`, where it mirrors the
-proof accepted on Prove2Me as `FourExp.exists_iteratedDeriv_presentation`.
+proof accepted on Prove2Me as `FourExp.exists_iteratedDeriv_presentation`. The accepted proof
+repeats the Leibniz expansion; here it is shared with the column case.
 -/
 
 @[expose] public section
@@ -61,11 +59,6 @@ lemma exists_bound_fin2 (w : Fin 2 → Fin 2 → ℕ) : ∃ W, ∀ p q, w p q �
         (Finset.mem_univ p))⟩
 
 /-! ### Values of integer polynomials -/
-
-lemma sz_lin {U V : ℤ[X][X]} {c : ℕ} (hU : Sz U c c) (hV : Sz V c c) (p q : ℕ) :
-    Sz (C (C (p : ℤ)) * U + C (C (q : ℤ)) * V) ((p + q) * c) c :=
-  sz_mono (sz_add (sz_mul (sz_CN p) hU) (sz_mul (sz_CN q) hV)) (Nat.add_mul p q c).symm.le
-    (Nat.zero_add c).le
 
 /-! ### The four exponential factors -/
 
@@ -139,174 +132,6 @@ lemma norm_lam_le {δ : ℂ} {C : ℝ} (hδ : ‖δ‖ ≤ C) (ℓ : Fin 2 → F
     norm_mul_le_pow (norm_pow_le_pow hδ _) (norm_pow_le_pow (hL p q) N)
   exact norm_mul_le_pow (norm_mul_le_pow (norm_mul_le_pow (hf 0 0) (hf 0 1)) (hf 1 0)) (hf 1 1)
 
-/-! ### The presentation of the derivative -/
-
-lemma sz_pres {Dp Bp Zp ep : ℤ[X][X]} {K c E dE S m i : ℕ} (hD : Sz Dp K c) (hB : Sz Bp K c)
-    (hZ : Sz Zp K c) (he : Sz ep E dE) (hi : i < S) (hK : 2 * (i + 1) ≤ K) :
-    Sz (pres Dp Bp Zp ep S m i) (K ^ (4 * m + S) * E) ((2 * m + S) * c + dE) := by
-  have hK0 : 0 < K := by omega
-  have hcoef : ∀ l, l ≤ m → m.choose l * i.descFactorial l ≤ K ^ m := fun l hl =>
-    calc m.choose l * i.descFactorial l ≤ 2 ^ m * (i + 1) ^ m :=
-          Nat.mul_le_mul (Nat.choose_le_two_pow m l)
-            ((Nat.descFactorial_le_pow i l).trans ((Nat.pow_le_pow_left (Nat.le_succ i) l).trans
-              (Nat.pow_le_pow_right (Nat.succ_pos i) hl)))
-      _ = (2 * (i + 1)) ^ m := (Nat.mul_pow 2 (i + 1) m).symm
-      _ ≤ K ^ m := Nat.pow_le_pow_left hK m
-  have h : Sz (pres Dp Bp Zp ep S m i) ((Finset.range (m + 1)).card * (K ^ (3 * m + S) * E))
-      ((2 * m + S) * c + dE) :=
-    sz_sum (Finset.range (m + 1)) _ fun l hl => by
-      have hl' := Finset.mem_range.1 hl
-      refine sz_mono (sz_mul (sz_mul (sz_CN _) (sz_mul (sz_mul (sz_mul (sz_pow hD l)
-        (sz_pow hB (m - l))) (sz_pow hZ (i - l))) (sz_pow hD (S - i + l)))) he) ?_ ?_
-      · refine Nat.mul_le_mul_right E ?_
-        rw [← pow_add, ← pow_add, ← pow_add]
-        calc m.choose l * i.descFactorial l * K ^ (l + (m - l) + (i - l) + (S - i + l))
-            ≤ K ^ m * K ^ (2 * m + S) :=
-              Nat.mul_le_mul (hcoef l (by omega)) (Nat.pow_le_pow_right hK0 (by omega))
-          _ = K ^ (3 * m + S) := by rw [← pow_add, show m + (2 * m + S) = 3 * m + S by omega]
-      · rw [Nat.zero_add, ← Nat.add_mul, ← Nat.add_mul, ← Nat.add_mul]
-        exact Nat.add_le_add_right (Nat.mul_le_mul_right c (by omega)) dE
-  refine sz_mono h ?_ le_rfl
-  rw [Finset.card_range]
-  calc (m + 1) * (K ^ (3 * m + S) * E) ≤ K ^ m * (K ^ (3 * m + S) * E) :=
-        Nat.mul_le_mul_right _ ((succ_le_two_pow m).trans (Nat.pow_le_pow_left (by omega) m))
-    _ = K ^ (4 * m + S) * E := by
-        rw [← Nat.mul_assoc, ← pow_add, show m + (3 * m + S) = 4 * m + S by omega]
-
-/-- The polynomial `P_{ijk}`. -/
-noncomputable def Ppol (ℓ : Fin 2 → Fin 2 → ℕ) (r : Fin 2 → Fin 2 → ℕ → ℕ → ℤ)
-    (L : Fin 2 → Fin 2 → ℤ) (D : ℤ[X][X]) (E G : Fin 2 → ℤ[X][X]) (H : Fin 2 → Fin 2 → ℤ[X][X])
-    (S a b m N i j k : ℕ) : ℤ[X][X] :=
-  pres D (C (C (j : ℤ)) * E 0 + C (C (k : ℤ)) * E 1) (C (C (a : ℤ)) * G 0 + C (C (b : ℤ)) * G 1)
-    (epart ℓ r L H D N a b j k) S m i
-
-/-- The statement, for an arbitrary ring homomorphism `φ : ℤ[X][Y] → ℂ`. -/
-theorem exists_iteratedDeriv_presentation_main (x₁ x₂ y₁ y₂ : ℂ)
-    (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁, y₂] j)))
-    (φ : ℤ[X][X] →+* ℂ) (D : ℤ[X][X]) (E G : Fin 2 → ℤ[X][X]) (H : Fin 2 → Fin 2 → ℤ[X][X])
-    (hD : φ D ≠ 0) (hE : ∀ i, ![x₁, x₂] i * φ D = φ (E i))
-    (hG : ∀ j, ![y₁, y₂] j * φ D = φ (G j))
-    (hH : ∀ i j, Complex.exp (![x₁, x₂] i * ![y₁, y₂] j) * φ D = φ (H i j)) :
-    ∃ c : ℕ, ∀ S T a b m : ℕ, ∃ Λ : ℂ, Λ ≠ 0 ∧ ‖Λ‖ ≤ (c : ℝ) ^ (c * (1 + m + S + T * (a + b))) ∧
-      ∃ P : Fin S → Fin T → Fin T → ℤ[X][X],
-        (∀ i j k, len (P i j k) ≤
-          c ^ (c * (1 + m + S + T * (a + b))) * (1 + m + S + T + a + b) ^ (c * (1 + m + S))) ∧
-        (∀ i j k r, ((P i j k).coeff r).natDegree ≤ c * (1 + m + S)) ∧
-        (∀ i j k, (P i j k).natDegree ≤ c * (1 + m + S)) ∧
-        ∀ f : Fin S → Fin T → Fin T → ℂ,
-          Λ * iteratedDeriv m (fun z : ℂ => ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T,
-              f i j k * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * z))
-            ((a : ℂ) * y₁ + (b : ℂ) * y₂) =
-          ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T, f i j k * φ (P i j k) := by
-  -- integer relations for the powers of the four algebraic exponentials
-  choose ℓ A L hL hr using fun p q => Transcendence.exists_int_pow_repr (hexp p q)
-  choose r hr1 hr2 using hr
-  -- a common size `c₀` for the data
-  obtain ⟨cD, hcD⟩ := sz_exists D
-  obtain ⟨cE, hcE⟩ := sz_exists_fam E
-  obtain ⟨cG, hcG⟩ := sz_exists_fam G
-  obtain ⟨cH, hcH⟩ := sz_exists_fam (fun pq : Fin 2 × Fin 2 => H pq.1 pq.2)
-  obtain ⟨c₀, hc₀⟩ : ∃ c₀, c₀ = cD + cE + cG + cH + 1 := ⟨_, rfl⟩
-  have hD0 : Sz D c₀ c₀ := sz_mono hcD (by omega) (by omega)
-  have hE0 : ∀ p, Sz (E p) c₀ c₀ := fun p => sz_mono (hcE p) (by omega) (by omega)
-  have hG0 : ∀ q, Sz (G q) c₀ c₀ := fun q => sz_mono (hcG q) (by omega) (by omega)
-  have hH0 : ∀ p q, Sz (H p q) c₀ c₀ := fun p q => sz_mono (hcH (p, q)) (by omega) (by omega)
-  -- the constants of the four exponential factors
-  obtain ⟨W, hW⟩ := exists_bound_fin2 fun p q =>
-    ℓ p q * c₀ ^ (ℓ p q - 1) + (ℓ p q - 1) * c₀ + (L p q).natAbs + A p q + ℓ p q
-  have hW' : ∀ p q, ℓ p q * c₀ ^ (ℓ p q - 1) ≤ W ∧ (ℓ p q - 1) * c₀ ≤ W ∧
-      (L p q).natAbs ≤ W ∧ A p q ≤ W := fun p q => by
-    have h : ℓ p q * c₀ ^ (ℓ p q - 1) + (ℓ p q - 1) * c₀ + (L p q).natAbs + A p q + ℓ p q ≤ W :=
-      hW p q
-    exact ⟨by omega, by omega, by omega, by omega⟩
-  have hℓW : ∀ p q, ℓ p q ≤ W := fun p q => by
-    have h : ℓ p q * c₀ ^ (ℓ p q - 1) + (ℓ p q - 1) * c₀ + (L p q).natAbs + A p q + ℓ p q ≤ W :=
-      hW p q
-    omega
-  obtain ⟨CL, hCL⟩ := exists_bound_fin2 fun p q => ⌈‖(L p q : ℂ)‖⌉₊
-  obtain ⟨c, hc⟩ : ∃ c, c = 4 * (W + c₀ + CL + ⌈‖φ D‖⌉₊ + 1) := ⟨_, rfl⟩
-  refine ⟨c, fun S T a b m => ?_⟩
-  obtain ⟨N, hN⟩ : ∃ N, N = T * (a + b) := ⟨_, rfl⟩
-  obtain ⟨Q, hQ⟩ : ∃ Q, Q = 1 + m + S + T + a + b := ⟨_, rfl⟩
-  obtain ⟨K, hK⟩ : ∃ K, K = 2 * Q * c₀ := ⟨_, rfl⟩
-  rw [← hN, ← hQ]
-  -- elementary inequalities
-  have hQK : 2 * Q ≤ K := by
-    rw [hK]
-    calc 2 * Q = 2 * Q * 1 := (Nat.mul_one _).symm
-      _ ≤ 2 * Q * c₀ := Nat.mul_le_mul_left _ (by omega)
-  have hc₀K : c₀ ≤ K := by
-    rw [hK]
-    calc c₀ = 1 * c₀ := (Nat.one_mul _).symm
-      _ ≤ 2 * Q * c₀ := Nat.mul_le_mul_right _ (by omega)
-  have hja : ∀ j : Fin T, (j : ℕ) * a ≤ N := fun j => by
-    rw [hN]; exact Nat.mul_le_mul j.2.le (Nat.le_add_right a b)
-  have hjb : ∀ j : Fin T, (j : ℕ) * b ≤ N := fun j => by
-    rw [hN]; exact Nat.mul_le_mul j.2.le (Nat.le_add_left b a)
-  -- sizes of the `P_{ijk}`
-  have hsz : ∀ (i : Fin S) (j k : Fin T), Sz (Ppol ℓ r L D E G H S a b m N i j k)
-      (K ^ (4 * m + S) * W ^ (4 * (N + 1))) ((2 * m + S) * c₀ + 4 * W) := fun i j k =>
-    sz_pres (sz_mono hD0 hc₀K le_rfl)
-      (sz_mono (sz_lin (hE0 0) (hE0 1) (j : ℕ) (k : ℕ))
-        (by rw [hK]; exact Nat.mul_le_mul_right c₀ (by omega)) le_rfl)
-      (sz_mono (sz_lin (hG0 0) (hG0 1) a b)
-        (by rw [hK]; exact Nat.mul_le_mul_right c₀ (by omega)) le_rfl)
-      (sz_epart ℓ r L A hH0 hD0 hr2 hW' (hja j) (hjb j) (hja k) (hjb k)) i.2
-      (by have := i.2; omega)
-  have hdeg : (2 * m + S) * c₀ + 4 * W ≤ c * (1 + m + S) := by
-    have e1 : (2 * m + S) * c₀ ≤ (2 * m + 2 * S) * c₀ := Nat.mul_le_mul_right c₀ (by omega)
-    have e2 : (2 * m + 2 * S) * c₀ = 2 * c₀ * (m + S) := by ring
-    have e3 : 2 * c₀ * (m + S) ≤ c * (m + S) := Nat.mul_le_mul_right (m + S) (by omega)
-    have e4 : c * (1 + m + S) = c + c * (m + S) := by ring
-    omega
-  refine ⟨φ D ^ (m + S) * existsIteratedDerivPresentationLam (φ D) ℓ L N,
-      mul_ne_zero (pow_ne_zero _ hD) (lam_ne_zero hD ℓ hL N),
-    ?_, fun i j k => Ppol ℓ r L D E G H S a b m N i j k, fun i j k => ?_,
-    fun i j k r' => ((hsz i j k).2.1 r').trans hdeg, fun i j k => (hsz i j k).2.2.trans hdeg,
-    fun f => ?_⟩
-  · -- the size of `Λ`
-    have h1 : (1 : ℝ) ≤ c := Nat.one_le_cast.2 (by omega)
-    have hδc : ‖φ D‖ ≤ (c : ℝ) := (Nat.le_ceil _).trans (Nat.cast_le.2 (by omega))
-    have hLc : ∀ p q, ‖(L p q : ℂ)‖ ≤ (c : ℝ) := fun p q =>
-      (Nat.le_ceil _).trans (Nat.cast_le.2 ((hCL p q).trans (by omega)))
-    refine (norm_mul_le_pow (norm_pow_le_pow hδc (m + S)) (norm_lam_le hδc ℓ hLc N)).trans
-      (pow_le_pow_right₀ h1 ?_)
-    have e1 : c * (1 + m + S + N) = c + c * (m + S + N) := by ring
-    have e2 : 4 * (m + S + N) ≤ c * (m + S + N) := Nat.mul_le_mul_right _ (by omega)
-    have := hℓW 0 0
-    have := hℓW 0 1
-    have := hℓW 1 0
-    have := hℓW 1 1
-    omega
-  · -- the length of `P_{ijk}`
-    have e1 : 4 * m + S ≤ c * (1 + m + S) := by
-      have : 4 * (1 + m + S) ≤ c * (1 + m + S) := Nat.mul_le_mul_right _ (by omega)
-      omega
-    have e2 : 4 * m + S + 4 * (N + 1) ≤ c * (1 + m + S + N) := by
-      have : 4 * (1 + m + S + N) ≤ c * (1 + m + S + N) := Nat.mul_le_mul_right _ (by omega)
-      omega
-    calc len (Ppol ℓ r L D E G H S a b m N i j k)
-        ≤ K ^ (4 * m + S) * W ^ (4 * (N + 1)) := (hsz i j k).1
-      _ = (2 * c₀) ^ (4 * m + S) * W ^ (4 * (N + 1)) * Q ^ (4 * m + S) := by rw [hK]; ring
-      _ ≤ c ^ (4 * m + S) * c ^ (4 * (N + 1)) * Q ^ (c * (1 + m + S)) :=
-          Nat.mul_le_mul (Nat.mul_le_mul (Nat.pow_le_pow_left (by omega) _)
-            (Nat.pow_le_pow_left (by omega) _)) (Nat.pow_le_pow_right (by omega) e1)
-      _ ≤ c ^ (c * (1 + m + S + N)) * Q ^ (c * (1 + m + S)) := by
-          rw [← pow_add]
-          exact Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by omega) e2)
-  · -- the identity, by Leibniz's rule
-    rw [iteratedDeriv_expPoly S T m x₁ x₂ f, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun i _ => ?_
-    rw [Finset.mul_sum]
-    refine Finset.sum_congr rfl fun j _ => ?_
-    rw [Finset.mul_sum]
-    refine Finset.sum_congr rfl fun k _ => ?_
-    dsimp only [Ppol]
-    rw [pres_eval φ (lin_eval φ (u := x₁) (v := x₂) (hE 0) (hE 1) (j : ℕ) (k : ℕ))
-      (lin_eval φ (u := y₁) (v := y₂) (hG 0) (hG 1) a b)
-      (epart_eval φ x₁ x₂ y₁ y₂ ℓ r L H D hH hr1 (hja j) (hjb j) (hja k) (hjb k)) i.2]
-    exact mul_left_comm _ _ _
-
 end ExistsIteratedDerivPresentation
 
 open ExistsIteratedDerivPresentation PresentationSize
@@ -350,7 +175,93 @@ theorem exists_iteratedDeriv_presentation
           ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T,
             f i j k * Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ (P i j k)
                 := by
-  exact exists_iteratedDeriv_presentation_main x₁ x₂ y₁ y₂ hexp
-    (Polynomial.eval₂RingHom (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁) D E G H hD hE hG hH
+  -- the shared node, and `φ` as a ring homomorphism
+  obtain ⟨c₁, hSH⟩ :=
+    exists_iteratedDeriv_presentation_of_exp_factor x₁ x₂ y₁ y₂ ω ω₁ D E G hE hG
+  obtain ⟨φ, hφ⟩ : ∃ φ : Polynomial (Polynomial ℤ) →+* ℂ, ∀ P,
+      Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ P = φ P :=
+    ⟨Polynomial.eval₂RingHom (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁, fun _ => rfl⟩
+  simp only [hφ] at hD hH hSH ⊢
+  -- integer relations for the powers of the four algebraic exponentials
+  choose ℓ A Lc hLc hr using fun p q : Fin 2 => Transcendence.exists_int_pow_repr
+    (α := Complex.exp (![x₁, x₂] p * ![y₁, y₂] q)) (hexp p q)
+  choose r hr1 hr2 using hr
+  -- a common size `c₀` for `D` and `H`, and the constants of the four factors
+  obtain ⟨cD, hcD⟩ := sz_exists D
+  obtain ⟨cH, hcH⟩ := sz_exists_fam (fun pq : Fin 2 × Fin 2 => H pq.1 pq.2)
+  obtain ⟨c₀, hc₀⟩ : ∃ c₀, c₀ = cD + cH + 1 := ⟨_, rfl⟩
+  have hD0 : Sz D c₀ c₀ := sz_mono hcD (by omega) (by omega)
+  have hH0 : ∀ p q, Sz (H p q) c₀ c₀ := fun p q => sz_mono (hcH (p, q)) (by omega) (by omega)
+  obtain ⟨W, hW⟩ := exists_bound_fin2 fun p q =>
+    ℓ p q * c₀ ^ (ℓ p q - 1) + (ℓ p q - 1) * c₀ + (Lc p q).natAbs + A p q + ℓ p q
+  have hW' : ∀ p q, ℓ p q * c₀ ^ (ℓ p q - 1) ≤ W ∧ (ℓ p q - 1) * c₀ ≤ W ∧
+      (Lc p q).natAbs ≤ W ∧ A p q ≤ W ∧ ℓ p q ≤ W := fun p q => by
+    have h : ℓ p q * c₀ ^ (ℓ p q - 1) + (ℓ p q - 1) * c₀ + (Lc p q).natAbs + A p q + ℓ p q ≤ W :=
+      hW p q
+    exact ⟨by omega, by omega, by omega, by omega, by omega⟩
+  obtain ⟨CL, hCL⟩ := exists_bound_fin2 fun p q => ⌈‖(Lc p q : ℂ)‖⌉₊
+  obtain ⟨c, hc⟩ : ∃ c, c = c₁ + 4 * (W + c₀ + CL + ⌈‖φ D‖⌉₊ + 1) := ⟨_, rfl⟩
+  refine ⟨c, fun S T a b m => ?_⟩
+  obtain ⟨N, hN⟩ : ∃ N, N = T * (a + b) := ⟨_, rfl⟩
+  rw [← hN]
+  have hja : ∀ j : Fin T, (j : ℕ) * a ≤ N := fun j => by
+    rw [hN]
+    exact (Nat.mul_le_mul_right a j.2.le).trans (Nat.mul_le_mul_left T (Nat.le_add_right a b))
+  have hjb : ∀ j : Fin T, (j : ℕ) * b ≤ N := fun j => by
+    rw [hN]
+    exact (Nat.mul_le_mul_right b j.2.le).trans (Nat.mul_le_mul_left T (Nat.le_add_left b a))
+  -- the exponential factor, presented
+  have hszU : ∀ j k : Fin T, Sz (epart ℓ r Lc H D N a b j k) (W ^ (4 * (N + 1))) (4 * W) :=
+    fun j k => sz_epart ℓ r Lc A hH0 hD0 hr2
+      (fun p q => ⟨(hW' p q).1, (hW' p q).2.1, (hW' p q).2.2.1, (hW' p q).2.2.2.1⟩)
+      (hja j) (hjb j) (hja k) (hjb k)
+  obtain ⟨P, hPl, hPx, hPy, hPid⟩ :=
+    hSH S T a b m (existsIteratedDerivPresentationLam (φ D) ℓ Lc N) _ _
+      (fun j k => epart ℓ r Lc H D N a b j k) (fun j k => (hszU j k).1)
+      (fun j k => (hszU j k).2.1) (fun j k => (hszU j k).2.2)
+      (fun j k => epart_eval φ x₁ x₂ y₁ y₂ ℓ r Lc H D hH hr1 (hja j) (hjb j) (hja k) (hjb k))
+  have hdeg : c₁ * (1 + m + S) + 4 * W ≤ c * (1 + m + S) := by
+    have e2 : (c₁ + 4 * W) * (1 + m + S) ≤ c * (1 + m + S) := Nat.mul_le_mul_right _ (by omega)
+    have e3 : (c₁ + 4 * W) * (1 + m + S) = c₁ * (1 + m + S) + 4 * W * (1 + m + S) := by ring
+    have e4 : 4 * W ≤ 4 * W * (1 + m + S) := Nat.le_mul_of_pos_right _ (by omega)
+    omega
+  refine ⟨φ D ^ (m + S) * existsIteratedDerivPresentationLam (φ D) ℓ Lc N,
+    mul_ne_zero (pow_ne_zero _ hD) (lam_ne_zero hD ℓ hLc N), ?_, P, fun i j k => ?_,
+    fun i j k r' => (hPx i j k r').trans hdeg, fun i j k => (hPy i j k).trans hdeg, hPid⟩
+  · -- the size of `Λ`
+    have h1 : (1 : ℝ) ≤ c := Nat.one_le_cast.2 (by omega)
+    have hδc : ‖φ D‖ ≤ (c : ℝ) := (Nat.le_ceil _).trans (Nat.cast_le.2 (by omega))
+    have hLc' : ∀ p q, ‖(Lc p q : ℂ)‖ ≤ (c : ℝ) := fun p q =>
+      (Nat.le_ceil _).trans (Nat.cast_le.2 ((hCL p q).trans (by omega)))
+    refine (norm_mul_le_pow (norm_pow_le_pow hδc (m + S)) (norm_lam_le hδc ℓ hLc' N)).trans
+      (pow_le_pow_right₀ h1 ?_)
+    have e1 : c * (1 + m + S + N) = c + c * (m + S + N) := by ring
+    have e2 : 4 * (m + S + N) ≤ c * (m + S + N) := Nat.mul_le_mul_right _ (by omega)
+    have := (hW' 0 0).2.2.2.2
+    have := (hW' 0 1).2.2.2.2
+    have := (hW' 1 0).2.2.2.2
+    have := (hW' 1 1).2.2.2.2
+    omega
+  · -- the length of `P_{ijk}`
+    have hc1 : 1 ≤ c := by omega
+    have hY : 1 ≤ 1 + m + S + T + a + b := by omega
+    have hexp' : c₁ * (1 + m + S) + 4 * (N + 1) ≤ c * (1 + m + S + N) := by
+      have f1 : c * (1 + m + S + N) = c * (1 + m + S) + c * N := by ring
+      have f2 : (c₁ + 4) * (1 + m + S) ≤ c * (1 + m + S) := Nat.mul_le_mul_right _ (by omega)
+      have f3 : (c₁ + 4) * (1 + m + S) = c₁ * (1 + m + S) + 4 * (1 + m + S) := by ring
+      have f4 : 4 * N ≤ c * N := Nat.mul_le_mul_right _ (by omega)
+      omega
+    calc len (P i j k)
+        ≤ c₁ ^ (c₁ * (1 + m + S)) * (1 + m + S + T + a + b) ^ (c₁ * (1 + m + S)) *
+            W ^ (4 * (N + 1)) := hPl i j k
+      _ ≤ c ^ (c₁ * (1 + m + S)) * (1 + m + S + T + a + b) ^ (c * (1 + m + S)) *
+            c ^ (4 * (N + 1)) :=
+          Nat.mul_le_mul (Nat.mul_le_mul (Nat.pow_le_pow_left (by omega) _)
+            (Nat.pow_le_pow_right hY (Nat.mul_le_mul_right _ (by omega))))
+            (Nat.pow_le_pow_left (by omega) _)
+      _ = c ^ (c₁ * (1 + m + S) + 4 * (N + 1)) * (1 + m + S + T + a + b) ^ (c * (1 + m + S)) := by
+          rw [pow_add]; ring
+      _ ≤ c ^ (c * (1 + m + S + N)) * (1 + m + S + T + a + b) ^ (c * (1 + m + S)) :=
+          Nat.mul_le_mul_right _ (Nat.pow_le_pow_right hc1 hexp')
 
 end Diaz
