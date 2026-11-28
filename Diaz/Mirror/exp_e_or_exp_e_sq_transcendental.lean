@@ -43,22 +43,18 @@ namespace ExpEOrExpESqTranscendental
 
 /-! ## Numbers algebraic over `ℚ[x]` -/
 
-/-- The complex numbers algebraic over `ℚ[x]`, as a `ℚ`-subalgebra of `ℂ`. -/
-noncomputable def expEOrExpESqTranscendentalAlgOver (x : ℂ) : Subalgebra ℚ ℂ :=
-  (Subalgebra.algebraicClosure ↥(Algebra.adjoin ℚ ({x} : Set ℂ)) ℂ).restrictScalars ℚ
-
 theorem exp_e_or_exp_e_sq_transcendental_mem_algOver_of_isAlgebraic {x z : ℂ} (h : IsAlgebraic ℚ z)
-    : z ∈ expEOrExpESqTranscendentalAlgOver x :=
+    : z ∈ Transcendence.Trdeg.trdegAdjoinLeOneOfIsAlgebraicAdjoinE ℚ x :=
   h.extendScalars (algebraMap ℚ ↥(Algebra.adjoin ℚ ({x} : Set ℂ))).injective
 
 theorem exp_e_or_exp_e_sq_transcendental_self_mem_algOver (x : ℂ) : x ∈
-    expEOrExpESqTranscendentalAlgOver x :=
+    Transcendence.Trdeg.trdegAdjoinLeOneOfIsAlgebraicAdjoinE ℚ x :=
   isAlgebraic_algebraMap (⟨x, Algebra.subset_adjoin rfl⟩ : ↥(Algebra.adjoin ℚ ({x} : Set ℂ)))
 
 /-- If every element of `S` is algebraic over `ℚ[x]`, no two elements of `S` are algebraically
 independent over `ℚ`: they would sit in `ℚ[S]`, of transcendence degree at most one. -/
 theorem exp_e_or_exp_e_sq_transcendental_not_algIndep_of_forall_mem_algOver {x : ℂ} {S : Set ℂ} (hS
-    : ∀ s ∈ S, s ∈ expEOrExpESqTranscendentalAlgOver x)
+    : ∀ s ∈ S, s ∈ Transcendence.Trdeg.trdegAdjoinLeOneOfIsAlgebraicAdjoinE ℚ x)
     {a b : ℂ} (ha : a ∈ S) (hb : b ∈ S) : ¬ AlgebraicIndependent ℚ ![a, b] := fun hab => by
   have hv : AlgebraicIndependent ℚ (![⟨a, Algebra.subset_adjoin ha⟩, ⟨b,
       Algebra.subset_adjoin hb⟩] :

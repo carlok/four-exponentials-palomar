@@ -10,6 +10,7 @@ public import Diaz.Mirror.exists_iteratedDeriv_reduced_presentation_column
 public import Diaz.Mirror.extrapolation
 public import Diaz.Mirror.norm_to_polynomial_alg_column
 public import Diaz.Mirror.trdeg_one_presentation_column
+public import Diaz.Mirror.construction_growth
 
 /-!
 # The core of the construction, in the column case
@@ -55,14 +56,11 @@ theorem construction_core_column
               c i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z))
               ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 →
             ∃ P : Polynomial ℤ, P ≠ 0 ∧
-              (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
-                  Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-              (P.natDegree : ℝ) ≤ k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 /
-                  Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) ∧
-              ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
-                  Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)))) * (k *
-                      (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2
-                          / Real.sqrt (Real.log (N : ℝ)))))) := by
+              (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * ConstructionGrowth.A N)) ∧
+              (P.natDegree : ℝ) ≤ k * ConstructionGrowth.B N ∧
+              ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * ConstructionGrowth.A N) * (k *
+                      ConstructionGrowth.B N))) := by
+  unfold ConstructionGrowth.A ConstructionGrowth.B
   obtain ⟨ω, ω₁, hω, Q, hQm, hQd, hQroot, hQmin, D, E, G, H, hD, hE, hG, hH⟩ :=
     trdeg_one_presentation_column x₁ x₂ y₁ y₂ hx hy hexp₂ htr
   have hpres := exists_iteratedDeriv_reduced_presentation_column x₁ x₂ y₁ y₂ hexp₂ ω ω₁

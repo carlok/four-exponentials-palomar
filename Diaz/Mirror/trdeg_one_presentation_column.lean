@@ -12,6 +12,7 @@ public import Mathlib.Tactic.Convert
 public import Mathlib.Tactic.FinCases
 public import Mathlib.Tactic.NormNum
 public import Mathlib.Tactic.Set
+public import Diaz.Mirror.trdeg_one_presentation
 
 /-!
 # The column data in transcendence degree one
@@ -36,32 +37,6 @@ proof accepted on Prove2Me as `FourExp.trdeg_one_presentation_column`.
 namespace Diaz
 
 namespace TrdegOnePresentationColumn
-
-/-- In `ℚ[S] ⊆ ℂ` of transcendence degree at most one, every element is algebraic over `ℚ(ω)`,
-for any transcendental `ω ∈ ℚ[S]`. -/
-lemma trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one (S : Set ℂ) (htr : Algebra.trdeg ℚ
-    ↥(Algebra.adjoin ℚ S) ≤ 1)
-    {ω z : ℂ} (hωS : ω ∈ Algebra.adjoin ℚ S) (hzS : z ∈ Algebra.adjoin ℚ S)
-    (hω : Transcendental ℚ ω) :
-    IsAlgebraic (IntermediateField.adjoin ℚ ({ω} : Set ℂ)) z := by
-  rw [IntermediateField.isAlgebraic_adjoin_iff]
-  by_contra hz
-  have hind : AlgebraicIndependent ℚ (fun _ : Unit => ω) :=
-    (algebraicIndependent_singleton_iff ()).2 hω
-  have htrans : Transcendental (Algebra.adjoin ℚ (Set.range fun _ : Unit => ω)) z := by
-    rw [Set.range_const]
-    exact hz
-  have hopt := (hind.option_iff_transcendental z).2 htrans
-  let v : Option Unit → Algebra.adjoin ℚ S := fun o => o.elim ⟨z, hzS⟩ (fun _ => ⟨ω, hωS⟩)
-  have hv : AlgebraicIndependent ℚ v := by
-    refine AlgebraicIndependent.of_comp (Algebra.adjoin ℚ S).val ?_
-    convert hopt using 1
-    funext o
-    cases o <;> rfl
-  have hcard := hv.cardinalMk_le_trdeg
-  rw [show Cardinal.mk (Option Unit) = 2 by simp] at hcard
-  have := hcard.trans htr
-  norm_num at this
 
 end TrdegOnePresentationColumn
 
@@ -103,13 +78,13 @@ theorem trdeg_one_presentation_column
     (Sum.elim (fun j => ![y₁, y₂] j) (fun p => Complex.exp (![x₁, x₂] p.1 * ![y₁, y₂] p.2)))
   have hf : ∀ o, IsAlgebraic (IntermediateField.adjoin ℚ ({x₁ * y₂} : Set ℂ)) (f o) := by
     rintro (i | j | ⟨p, q⟩)
-    · exact trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one _ htr hωS
+    · exact Diaz.TrdegOnePresentation.isAlgebraic_of_trdeg_le_one _ htr hωS
         (hS (![x₁, x₂] i) (by fin_cases i <;> simp [hsix])) hω
-    · exact trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one _ htr hωS
+    · exact Diaz.TrdegOnePresentation.isAlgebraic_of_trdeg_le_one _ htr hωS
         (hS (![y₁, y₂] j) (by fin_cases j <;> simp [hsix])) hω
     · fin_cases q
       · -- the row `e^{x_p y₁}` is one of the six generators
-        exact trdeg_one_presentation_column_isAlgebraic_of_trdeg_le_one _ htr hωS
+        exact Diaz.TrdegOnePresentation.isAlgebraic_of_trdeg_le_one _ htr hωS
           (hS (Complex.exp (![x₁, x₂] p * y₁)) (by fin_cases p <;> simp [hsix])) hω
       · -- the column `e^{x_p y₂}` is algebraic over `ℚ`
         exact IsAlgebraic.tower_top (L := IntermediateField.adjoin ℚ ({x₁ * y₂} : Set ℂ))

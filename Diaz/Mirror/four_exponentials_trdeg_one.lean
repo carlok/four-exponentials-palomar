@@ -67,12 +67,12 @@ theorem four_exponentials_trdeg_one :
           (a : ℂ) * l₁₁ + (b : ℂ) * l₂₁ = 0 ∧ (a : ℂ) * l₁₂ + (b : ℂ) * l₂₂ = 0)
       ∨ (∃ a b : ℚ, ¬(a = 0 ∧ b = 0) ∧
           (a : ℂ) * l₁₁ + (b : ℂ) * l₁₂ = 0 ∧ (a : ℂ) * l₂₁ + (b : ℂ) * l₂₂ = 0) := by
-  intro l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂ n₁₁ n₁₂ n₂₁ n₂₂ hdet htr
+  intro l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂ n₁₁ _ _ _ hdet htr
   by_contra hcon
   obtain ⟨hrows, hcols⟩ := not_or.mp hcon
   obtain ⟨ω, hω, σ₁, σ₂, hm₁, hm₂, ht₁, ht₂, a₁, a₂, ha₁, ha₂, h₂₁, hg₁, hg₂, hC⟩ :=
     small_polynomials_of_counterexample l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂
-      n₁₁ n₁₂ n₂₁ n₂₂ hdet htr hrows hcols
+      n₁₁ hdet htr hrows hcols
   obtain ⟨N₀, P, hP⟩ := hC (max (10 + 1) ((4 + 1) * (a₁ * a₂)))
   exact hω (transcendence_criterion ω 1 one_pos σ₁ σ₂ hm₁ hm₂ ht₁ ht₂ a₁ a₂ ha₁ ha₂
     h₂₁ hg₁ hg₂ N₀ P (fun N hN => (hP N hN).1) (fun N hN => (hP N hN).2.1)

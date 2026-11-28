@@ -184,23 +184,11 @@ open ConstructionGrowth in
 increasing and tend to $+\infty$, and for every $x>0$
 $$ \sigma_2(x) \le\sigma_1(x), \qquad\sigma_i(x+1) \le3\,\sigma_i(x)\quad(i =1,2). $$ -/
 theorem construction_growth (k : ℝ) (hk : 0 < k) :
-    StrictMono (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 *
-        Real.sqrt (Real.log x))) ∧
-    StrictMono (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 /
-        Real.sqrt (Real.log x))) ∧
-    Tendsto (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 *
-        Real.sqrt (Real.log x))) atTop atTop ∧
-    Tendsto (fun x : ℝ => k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 /
-        Real.sqrt (Real.log x))) atTop atTop ∧
-    (∀ x : ℝ, 0 < x → k * (if x ≤ 3 then x - 3 + 9 / Real.sqrt (Real.log 3) else x ^ 2 /
-        Real.sqrt (Real.log x)) ≤ k * (if x ≤ 3 then x - 3 + 9 * Real.sqrt (Real.log 3) else x ^ 2 *
-            Real.sqrt (Real.log x))) ∧
-    (∀ x : ℝ, 0 < x → k * (if (x + 1) ≤ 3 then (x + 1) - 3 + 9 * Real.sqrt (Real.log 3) else (x +
-        1) ^ 2 * Real.sqrt (Real.log (x + 1))) ≤ 3 * (k * (if x ≤ 3 then x - 3 + 9 *
-            Real.sqrt (Real.log 3) else x ^ 2 * Real.sqrt (Real.log x)))) ∧
-    (∀ x : ℝ, 0 < x → k * (if (x + 1) ≤ 3 then (x + 1) - 3 + 9 / Real.sqrt (Real.log 3) else (x +
-        1) ^ 2 / Real.sqrt (Real.log (x + 1))) ≤ 3 * (k * (if x ≤ 3 then x - 3 + 9 /
-            Real.sqrt (Real.log 3) else x ^ 2 / Real.sqrt (Real.log x)))) := by
+    StrictMono (fun x : ℝ => k * A x) ∧ StrictMono (fun x : ℝ => k * B x) ∧
+    Tendsto (fun x : ℝ => k * A x) atTop atTop ∧ Tendsto (fun x : ℝ => k * B x) atTop atTop ∧
+    (∀ x : ℝ, 0 < x → k * B x ≤ k * A x) ∧
+    (∀ x : ℝ, 0 < x → k * A (x + 1) ≤ 3 * (k * A x)) ∧
+    (∀ x : ℝ, 0 < x → k * B (x + 1) ≤ 3 * (k * B x)) := by
   refine ⟨fun x y h => mul_lt_mul_of_pos_left (strictMono_A h) hk,
     fun x y h => mul_lt_mul_of_pos_left (strictMono_B h) hk,
     Filter.Tendsto.const_mul_atTop hk tendsto_A,

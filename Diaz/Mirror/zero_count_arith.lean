@@ -126,7 +126,7 @@ $$ \sigma\log\frac{R-x}{x+1} \le\log\Bigl(n!\,2^{n+1}\frac{R}{R-1}\Bigr)+2R, $$
 then
 $$ \sigma<\frac{n}{\lambda}+2\,\frac{1+n^{\lambda}}{\lambda\log n}\,(1+x). $$ -/
 theorem zero_count_arith
-    (n : ℕ) (hn : 2 ≤ n) (x lam : ℝ) (hx : 0 ≤ x) (hlam : 0 < lam) (σ : ℝ) (_hσ : 0 ≤ σ)
+    (n : ℕ) (hn : 2 ≤ n) (x lam : ℝ) (hx : 0 ≤ x) (hlam : 0 < lam) (σ : ℝ)
     (h : ∀ R : ℝ, x + 1 < R →
       σ * Real.log ((R - x) / (x + 1)) ≤ Real.log ((n.factorial : ℝ) * 2 ^ (n + 1) * R / (R - 1)) +
           2 * R) :

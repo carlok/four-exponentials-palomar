@@ -45,9 +45,9 @@ namespace FourExpCount
 /-- The counting inequality, as pure algebra. `S`, `t₁`, `t₂`, `d`, `T` stand for the
 floor quantities, and `W` for `X(Y₁+Y₂)`. -/
 lemma count_core (N q S t₁ t₂ d T W : ℝ) (hW : 0 ≤ W) (hq : 40 * (1 + 28 * W) ≤ q)
-    (hqN : q ^ 2 ≤ N) (hN : 84 ≤ N) (_hS1 : S * q ≤ N ^ 2) (hS2 : N ^ 2 ≤ (S + 1) * q)
+    (hqN : q ^ 2 ≤ N) (hN : 84 ≤ N) (hS2 : N ^ 2 ≤ (S + 1) * q)
     (hSone : 1 ≤ S) (ht1 : N - q ≤ q * t₁) (ht2 : N * q - 1 ≤ t₂) (ht1n : 0 ≤ t₁)
-    (ht2n : 0 ≤ t₂) (hd : S - 1 ≤ 2 * d) (_hdn : 0 ≤ d) (_hTn : 0 ≤ T)
+    (ht2n : 0 ≤ t₂) (hd : S - 1 ≤ 2 * d)
     (hT : T * q ^ 2 ≤ 40 * (1 + 28 * W) * N ^ 4) :
     80 * N ^ 2 * S + T ≤ 196 * (t₁ * t₂ * d) := by
   have hq7 : (7:ℝ) ≤ q := by nlinarith
@@ -224,8 +224,8 @@ lemma Z_bound (N : ℕ) (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 ≤ Y₁) 
         mul_le_mul_of_nonneg_right hsum h1
     _ = 28 * (N:ℝ) ^ 3 * (X * (Y₁ + Y₂)) := by ring
 
-lemma T_bound (L u Z W N : ℝ) (hN : 84 ≤ N) (hL : 2 * Real.log N ≤ L) (hu : u ≤ N) (_hu0 : 0 ≤ u)
-    (hZ : Z ≤ 28 * N ^ 3 * W) (hZ0 : 0 ≤ Z) (_hW : 0 ≤ W) (hlogN : 0 < Real.log N) :
+lemma T_bound (L u Z W N : ℝ) (hN : 84 ≤ N) (hL : 2 * Real.log N ≤ L) (hu : u ≤ N)
+    (hZ : Z ≤ 28 * N ^ 3 * W) (hZ0 : 0 ≤ Z) (hlogN : 0 < Real.log N) :
     2 * (1 + u) / ((1 / 20 : ℝ) * L) * (1 + Z) * Real.log N ≤ 40 * (1 + 28 * W) * N ^ 4 := by
   have hLpos : 0 < L := by linarith
   have hA : 2 * (1 + u) / ((1 / 20 : ℝ) * L) * Real.log N ≤ 40 * N := by
@@ -266,7 +266,7 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
   have hN84 : 84 ≤ N := by omega
   have hN84r : (84:ℝ) ≤ (N:ℝ) := by exact_mod_cast hN84
   obtain ⟨hq1, hq2, hlogpos, hqN, hqq⟩ := FourExpCount.q_facts N hN84
-  obtain ⟨hS1, hS2, hSone, hSN2⟩ := FourExpCount.S_facts N hN84
+  obtain ⟨-, hS2, hSone, hSN2⟩ := FourExpCount.S_facts N hN84
   obtain ⟨ht1, ht2, ht1u, ht2u⟩ := FourExpCount.t_facts N hN84
   obtain ⟨hUeq, hrp, hlogU⟩ := FourExpCount.U_facts N hN84
   have hZ := FourExpCount.Z_bound N X Y₁ Y₂ hX hY₁ hY₂ hN84
@@ -293,26 +293,12 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
     have := mul_nonneg h2 hY₂
     have := mul_nonneg h3 hX
     positivity
-  have hrp0 : (0:ℝ) ≤ (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
-      N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ) :=
-    Real.rpow_nonneg (Nat.cast_nonneg _) _
   have hTq := FourExpCount.T_bound
     (Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)))
     ((((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
     (((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
       + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) * X))
-    W (N:ℝ) hN84r hlogU hrp hrp0 hZ hZ0 hW0 hlogpos
-  have hTn : (0:ℝ) ≤ 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
-      N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
-      / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
-          N) : ℕ) : ℝ)))
-      * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
-        + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) *
-            X)) := by
-    have hL : (0:ℝ) < Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
-        N) : ℕ) : ℝ)) := by
-      linarith
-    positivity
+    W (N:ℝ) hN84r hlogU hrp hZ hZ0 hlogpos
   have hTq' : (2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
       N) : ℕ) : ℝ)) ^ (1 / 20 : ℝ))
       / ((1 / 20 : ℝ) * Real.log (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 *
@@ -335,8 +321,8 @@ theorem construction_count_1973 (X Y₁ Y₂ : ℝ) (hX : 0 ≤ X) (hY₁ : 0 �
       * (1 + ((((14 * ⌊(N:ℝ) / Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₁
         + (((14 * ⌊(N:ℝ) * Real.sqrt (Real.log (N:ℝ))⌋₊) : ℕ) : ℝ) * Y₂) * ((((2 * N) : ℕ) : ℝ) *
             X)))
-    W hW0 hQ hq2 hN84r hS1 hS2 hSone ht1 ht2 (Nat.cast_nonneg _) (Nat.cast_nonneg _)
-    (FourExpCount.nat_div_two_ge _) (Nat.cast_nonneg _) hTn hTq'
+    W hW0 hQ hq2 hN84r hS2 hSone ht1 ht2 (Nat.cast_nonneg _) (Nat.cast_nonneg _)
+    (FourExpCount.nat_div_two_ge _) hTq'
   calc ((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ) / (1 / 20 : ℝ)
         + 2 * (1 + (((⌊(N:ℝ) ^ 2 / Real.sqrt (Real.log (N:ℝ))⌋₊ * (2 * N) * (2 * N) : ℕ) : ℝ)) ^ (1
             / 20 : ℝ))

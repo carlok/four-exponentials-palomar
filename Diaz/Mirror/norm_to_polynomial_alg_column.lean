@@ -16,6 +16,7 @@ public import Mathlib.Tactic.GCongr
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.Positivity
 public import Mathlib.Tactic.Ring
+public import Diaz.Mirror.norm_to_polynomial_alg
 
 /-!
 # A small non-zero derivative gives an integer polynomial that is small at `ω`, in the column case
@@ -52,48 +53,6 @@ namespace Diaz
 namespace NormToPolynomialAlgColumn
 
 open Polynomial
-
-/-- A coefficient of an integer polynomial is at most its length. -/
-lemma norm_to_polynomial_alg_column_natAbs_coeff_le (P : Polynomial ℤ) (i : ℕ) :
-    (P.coeff i).natAbs ≤ ∑ j ∈ P.support, (P.coeff j).natAbs := by
-  by_cases hi : i ∈ P.support
-  · exact Finset.single_le_sum (f := fun j => (P.coeff j).natAbs) (fun _ _ => Nat.zero_le _) hi
-  · rw [notMem_support_iff.1 hi]; simp
-
-/-- Multiplying by an integer `a` multiplies the length by `|a|` at most. -/
-lemma norm_to_polynomial_alg_column_length_C_C_mul_le {a : ℤ} {P : Polynomial (Polynomial ℤ)} {x y :
-    ℝ} (ha : |(a : ℝ)| ≤ x)
-    (hP : ((∑ k ∈ P.support, ∑ i ∈ (P.coeff k).support, ((P.coeff k).coeff i).natAbs : ℕ) : ℝ)
-      ≤ y) :
-    ((∑ k ∈ (C (C a) * P).support, ∑ i ∈ ((C (C a) * P).coeff k).support,
-      (((C (C a) * P).coeff k).coeff i).natAbs : ℕ) : ℝ) ≤ x * y := by
-  have h := Transcendence.length_mul_le (C (C a)) P
-  have hC : ∑ k ∈ (C (C a)).support, ∑ i ∈ ((C (C a)).coeff k).support,
-      (((C (C a)).coeff k).coeff i).natAbs = a.natAbs := by
-    by_cases ha0 : a = 0
-    · simp [ha0]
-    · rw [support_C (C_ne_zero.2 ha0), Finset.sum_singleton, coeff_C_zero, support_C ha0,
-        Finset.sum_singleton, coeff_C_zero]
-  rw [hC] at h
-  refine (Nat.cast_le.2 h).trans ?_
-  rw [Nat.cast_mul, Nat.cast_natAbs, Int.cast_abs]
-  exact mul_le_mul ha hP (Nat.cast_nonneg _) ((abs_nonneg _).trans ha)
-
-/-- The length of a sum is at most the number of terms times a bound on their lengths. -/
-lemma norm_to_polynomial_alg_column_length_sum_le {ι : Type*} (s : Finset ι) (f : ι →
-    Polynomial (Polynomial ℤ)) (B : ℝ)
-    (h : ∀ i ∈ s, ((∑ k ∈ (f i).support, ∑ j ∈ ((f i).coeff k).support,
-      (((f i).coeff k).coeff j).natAbs : ℕ) : ℝ) ≤ B) :
-    ((∑ k ∈ (∑ i ∈ s, f i).support, ∑ j ∈ ((∑ i ∈ s, f i).coeff k).support,
-      (((∑ i ∈ s, f i).coeff k).coeff j).natAbs : ℕ) : ℝ) ≤ s.card * B := by
-  refine (Nat.cast_le.2 (Transcendence.length_sum_le s f)).trans ?_
-  rw [Nat.cast_sum]
-  exact (Finset.sum_le_sum h).trans (by rw [Finset.sum_const, nsmul_eq_mul])
-
-/-- For `A ≥ 1`, a nonnegative `x` is at most `e^(x A)`. -/
-lemma norm_to_polynomial_alg_column_le_exp_mul {x A : ℝ} (hx : 0 ≤ x) (hA : 1 ≤ A) : x ≤ Real.exp (x
-    * A) := by
-  nlinarith [Real.add_one_le_exp (x * A), mul_le_mul_of_nonneg_left hA hx]
 
 end NormToPolynomialAlgColumn
 
@@ -259,12 +218,12 @@ theorem norm_to_polynomial_alg_column
       ((Pol.coeff k).coeff i).natAbs = lP := ⟨_, rfl⟩
   have hlPe : (lP : ℝ) ≤ Real.exp (β * A) := by
     rw [← hlP, hPol]
-    refine (norm_to_polynomial_alg_column_length_sum_le _ _ _ fun i _ =>
-        norm_to_polynomial_alg_column_length_sum_le _ _ _ fun j _ =>
-      norm_to_polynomial_alg_column_length_sum_le _ _ _ fun k' _ =>
-          norm_to_polynomial_alg_column_length_sum_le _ _ _ fun μ _ =>
-              norm_to_polynomial_alg_column_length_sum_le _ _ _ fun ν _ =>
-      norm_to_polynomial_alg_column_length_C_C_mul_le (hqq i j k' μ ν) ((Nat.cast_le.2 (hRl i j k' μ
+    refine (Diaz.NormToPolynomialAlg.norm_to_polynomial_alg_length_sum_le _ _ _ fun i _ =>
+        Diaz.NormToPolynomialAlg.norm_to_polynomial_alg_length_sum_le _ _ _ fun j _ =>
+      Diaz.NormToPolynomialAlg.norm_to_polynomial_alg_length_sum_le _ _ _ fun k' _ =>
+          Diaz.NormToPolynomialAlg.norm_to_polynomial_alg_length_sum_le _ _ _ fun μ _ =>
+              Diaz.NormToPolynomialAlg.norm_to_polynomial_alg_length_sum_le _ _ _ fun ν _ =>
+      Diaz.NormToPolynomialAlg.length_C_C_mul_le (hqq i j k' μ ν) ((Nat.cast_le.2 (hRl i j k' μ
           ν)).trans hL5)).trans ?_
     simp only [Finset.card_univ, Fintype.card_fin]
     push_cast
@@ -277,7 +236,7 @@ theorem norm_to_polynomial_alg_column
       _ = 4 * κ * Q.natDegree * (N : ℝ) ^ 6 * (Real.exp (κ * A) * Real.exp (κ₅ * A)) := by ring
       _ ≤ Real.exp (4 * κ * Q.natDegree * A) * Real.exp (6 * A) *
             (Real.exp (κ * A) * Real.exp (κ₅ * A)) := by
-          gcongr; exact norm_to_polynomial_alg_column_le_exp_mul (by positivity) hA1
+          gcongr; exact Diaz.NormToPolynomialAlg.le_exp_mul (by positivity) hA1
       _ = Real.exp (β * A) := by rw [hβ]; simp only [add_mul, Real.exp_add]; ring
   -- The norm `P` of `φ(Pol)`, and the three bounds.
   obtain ⟨P, hP0, hPl, hPd, hPv⟩ :=
@@ -291,7 +250,7 @@ theorem norm_to_polynomial_alg_column
       mul_le_mul_of_nonneg_left hNa hc0]
   have hX : ((c₁ * lP : ℕ) : ℝ) ≤ Real.exp ((c₁ + β) * A) := by
     rw [Nat.cast_mul, add_mul, Real.exp_add]
-    exact mul_le_mul (norm_to_polynomial_alg_column_le_exp_mul (Nat.cast_nonneg _) hA1) hlPe
+    exact mul_le_mul (Diaz.NormToPolynomialAlg.le_exp_mul (Nat.cast_nonneg _) hA1) hlPe
         (Nat.cast_nonneg _)
       (Real.exp_pos _).le
   have hd0 : (0 : ℝ) ≤ Q.natDegree := Nat.cast_nonneg _
@@ -299,7 +258,7 @@ theorem norm_to_polynomial_alg_column
   · -- the height
     rw [ite_eq_right hN3', ← Int.cast_abs, ← Nat.cast_natAbs]
     have h1 : ((P.coeff i).natAbs : ℝ) ≤ ((c₁ * lP : ℕ) : ℝ) ^ Q.natDegree := by
-      exact_mod_cast (norm_to_polynomial_alg_column_natAbs_coeff_le P i).trans hPl
+      exact_mod_cast (Diaz.NormToPolynomialAlg.natAbs_coeff_le P i).trans hPl
     refine h1.trans ((pow_le_pow_left₀ (Nat.cast_nonneg _) hX _).trans ?_)
     rw [← Real.exp_nat_mul]
     refine Real.exp_le_exp.2 ?_

@@ -82,14 +82,6 @@ lemma common_denominator {ω ω₁ : ℂ} {ι : Type*} [Finite ι] (f : ι → �
       ← Finset.mul_prod_erase Finset.univ (fun j => evH ω ω₁ (D j)) (Finset.mem_univ i),
       ← mul_assoc, hE i]
 
-/-- A rational polynomial becomes integral after multiplying by a non-zero integer. -/
-lemma exists_monic_integral_model_presentation_exists_int_scaled (p : ℚ[X]) :
-    ∃ b : ℤ, b ≠ 0 ∧ ∃ q : ℤ[X], q.map (Int.castRingHom ℚ) = C (b : ℚ) * p := by
-  obtain ⟨b, hb, h⟩ := IsLocalization.integerNormalization_spec (nonZeroDivisors ℤ) p
-  refine ⟨b, nonZeroDivisors.ne_zero hb, IsLocalization.integerNormalization (nonZeroDivisors ℤ) p,
-    AddMonoidAlgebra.ext (Finsupp.ext fun i => ?_)⟩
-  simpa [coeff_map, coeff_C_mul, algebraMap_int_eq] using congrArg (fun q => q.coeff i) h
-
 lemma evH_C (ω ω₁ : ℂ) (q : ℤ[X]) :
     evH ω ω₁ (C q) = aeval ω (q.map (Int.castRingHom ℚ)) := by
   simp only [evH, Polynomial.coe_eval₂RingHom, eval₂_C, aeval_def, eval₂_map]
@@ -100,8 +92,8 @@ lemma presentable_of_mem {ω ω₁ y : ℂ} (hy : y ∈ IntermediateField.adjoin
     Presentable ω ω₁ y := by
   rw [IntermediateField.mem_adjoin_simple_iff] at hy
   obtain ⟨r, s, rfl⟩ := hy
-  obtain ⟨n₁, hn₁, q₁, e₁⟩ := exists_monic_integral_model_presentation_exists_int_scaled r
-  obtain ⟨n₂, hn₂, q₂, e₂⟩ := exists_monic_integral_model_presentation_exists_int_scaled s
+  obtain ⟨n₁, hn₁, q₁, e₁⟩ := Transcendence.ExistsMonicIntegralModel.exists_int_scaled r
+  obtain ⟨n₂, hn₂, q₂, e₂⟩ := Transcendence.ExistsMonicIntegralModel.exists_int_scaled s
   by_cases hs : aeval ω s = 0
   · rw [hs, div_zero]
     exact ⟨1, 0, by simp, by simp⟩

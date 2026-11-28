@@ -52,6 +52,7 @@ public import Diaz.Mirror.norm_to_polynomial_alg_column
 public import Diaz.Mirror.rank_one_parametrization
 public import Diaz.Mirror.siegel_aux
 public import Diaz.Mirror.siegel_entrywise
+public import Diaz.Mirror.presentation_size
 public import Diaz.Mirror.small_irreducible_factor
 public import Diaz.Mirror.small_polynomials_of_column
 public import Diaz.Mirror.small_polynomials_of_counterexample

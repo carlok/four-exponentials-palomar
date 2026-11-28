@@ -18,6 +18,7 @@ public import Mathlib.Tactic.GCongr
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.Positivity
 public import Mathlib.Tactic.Ring
+public import Diaz.Mirror.aux_linear_system
 
 /-!
 # The auxiliary linear system, in the column case
@@ -48,19 +49,6 @@ proof accepted on Prove2Me as `FourExp.aux_linear_system_column`.
 namespace Diaz
 
 namespace AuxLinearSystemColumn
-
-/-- A single integer coefficient of `P ∈ ℤ[X][Y]` is at most its length. -/
-theorem aux_linear_system_column_natAbs_coeff_le_length (P : Polynomial (Polynomial ℤ)) (k i : ℕ) :
-    ((P.coeff k).coeff i).natAbs ≤
-      ∑ k ∈ P.support, ∑ i ∈ (P.coeff k).support, ((P.coeff k).coeff i).natAbs := by
-  by_cases hk : k ∈ P.support
-  · by_cases hi : i ∈ (P.coeff k).support
-    · exact (Finset.single_le_sum (f := fun i => ((P.coeff k).coeff i).natAbs)
-        (fun _ _ => Nat.zero_le _) hi).trans (Finset.single_le_sum
-          (f := fun k => ∑ i ∈ (P.coeff k).support, ((P.coeff k).coeff i).natAbs)
-          (fun _ _ => Nat.zero_le _) hk)
-    · rw [Polynomial.notMem_support_iff.1 hi]; simp
-  · rw [Polynomial.notMem_support_iff.1 hk]; simp
 
 end AuxLinearSystemColumn
 

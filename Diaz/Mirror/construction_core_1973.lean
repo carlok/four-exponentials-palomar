@@ -9,6 +9,7 @@ public import Diaz.Mirror.auxiliary_function_alg
 public import Diaz.Mirror.extrapolation
 public import Diaz.Mirror.norm_to_polynomial_alg
 public import Diaz.Mirror.trdeg_one_presentation
+public import Diaz.Mirror.construction_growth
 
 /-!
 # The core of the construction
@@ -59,20 +60,17 @@ theorem construction_core_1973
               c i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k' : ℕ) : ℂ) * x₂) * z))
               ((a : ℂ) * y₁ + (b : ℂ) * y₂) ≠ 0 →
             ∃ P : Polynomial ℤ, P ≠ 0 ∧
-              (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
-                  Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ))))) ∧
-              (P.natDegree : ℝ) ≤ k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 /
-                  Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 / Real.sqrt (Real.log (N : ℝ))) ∧
-              ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 *
-                  Real.sqrt (Real.log 3) else (N : ℝ) ^ 2 * Real.sqrt (Real.log (N : ℝ)))) * (k *
-                      (if (N : ℝ) ≤ 3 then (N : ℝ) - 3 + 9 / Real.sqrt (Real.log 3) else (N : ℝ) ^ 2
-                          / Real.sqrt (Real.log (N : ℝ)))))) := by
+              (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (k * ConstructionGrowth.A N)) ∧
+              (P.natDegree : ℝ) ≤ k * ConstructionGrowth.B N ∧
+              ‖Polynomial.aeval ω P‖ < Real.exp (-(C * (k * ConstructionGrowth.A N) * (k *
+                      ConstructionGrowth.B N))) := by
+  unfold ConstructionGrowth.A ConstructionGrowth.B
   obtain ⟨ω, ω₁, hω, Q, hQm, hQd, hQroot, hQmin, D, E, G, H, hD, hE, hG, hH⟩ :=
     trdeg_one_presentation x₁ x₂ y₁ y₂ hx hy hexp htr
   obtain ⟨κ, hκ, N₃, h3⟩ := auxiliary_function_alg x₁ x₂ y₁ y₂ hexp ω ω₁ hω Q hQm hQd hQroot hQmin
     D E G H hD hE hG hH
   obtain ⟨κ', hκ', N₄, h4⟩ := extrapolation x₁ x₂ y₁ y₂ hy κ hκ
-  obtain ⟨k, hk, h5⟩ := norm_to_polynomial_alg x₁ x₂ y₁ y₂ hexp ω ω₁ hω Q hQm hQd hQroot hQmin
+  obtain ⟨k, hk, h5⟩ := norm_to_polynomial_alg x₁ x₂ y₁ y₂ hexp ω ω₁ Q hQm hQd hQroot hQmin
     D E G H hD hE hG hH κ κ' hκ hκ'
   refine ⟨ω, hω, k, hk, fun C => ?_⟩
   obtain ⟨N₅, h5C⟩ := h5 C

@@ -80,7 +80,6 @@ theorem expPoly_zero_count
     obtain ⟨hn, hΩ⟩ := hdeg
     have hΩpos : 0 < ⨆ j, ‖ω j‖ := lt_of_le_of_ne hΩ0 (Ne.symm hΩ)
     have h2 := expPoly_zero_count_scaled q ω hω b hb z₀ ρ hρ S hS hΩpos
-    exact zero_count_arith (∑ j, q j) (by omega) (ρ * ⨆ j, ‖ω j‖) lam hx hlam _
-      (Finset.sum_nonneg (fun z _ => Nat.cast_nonneg _)) h2
+    exact zero_count_arith (∑ j, q j) (by omega) (ρ * ⨆ j, ‖ω j‖) lam hx hlam _ h2
 
 end Diaz

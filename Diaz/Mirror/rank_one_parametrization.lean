@@ -84,7 +84,7 @@ theorem rank_one_parametrization :
     ∀ l₁₁ l₁₂ l₂₁ l₂₂ : ℂ,
       IsAlgebraic ℚ (Complex.exp l₁₁) → IsAlgebraic ℚ (Complex.exp l₁₂) →
       IsAlgebraic ℚ (Complex.exp l₂₁) → IsAlgebraic ℚ (Complex.exp l₂₂) →
-      l₁₁ ≠ 0 → l₁₂ ≠ 0 → l₂₁ ≠ 0 → l₂₂ ≠ 0 →
+      l₁₁ ≠ 0 →
       l₁₁ * l₂₂ = l₁₂ * l₂₁ →
       Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ ({l₁₁, l₁₂, l₂₁, l₂₂} : Set ℂ)) ≤ 1 →
       ¬ (∃ a b : ℚ, ¬(a = 0 ∧ b = 0) ∧
@@ -94,7 +94,7 @@ theorem rank_one_parametrization :
       ∃ x₁ x₂ y₁ y₂ : ℂ, LinearIndependent ℚ ![x₁, x₂] ∧ LinearIndependent ℚ ![y₁, y₂] ∧
         (∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁, y₂] j))) ∧
         Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ ({x₁, x₂, y₁, y₂} : Set ℂ)) ≤ 1 := by
-  intro l₁₁ l₁₂ l₂₁ l₂₂ he11 he12 he21 he22 h11 h12 h21 h22 hrank htr hcols hrows
+  intro l₁₁ l₁₂ l₂₁ l₂₂ he11 he12 he21 he22 h11 hrank htr hcols hrows
   have ht12 : l₁₁ * (l₁₂ / l₁₁) = l₁₂ := by field_simp
   have ht22 : l₂₁ * (l₁₂ / l₁₁) = l₂₂ := by
     field_simp

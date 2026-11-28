@@ -6,6 +6,7 @@ Authors: Carlo Perassi
 module
 
 public import Mathlib.Algebra.Polynomial.Coeff
+public import Diaz.Mirror.length_mul_le
 
 /-!
 # Length of a sum
@@ -34,38 +35,7 @@ proof accepted on Prove2Me as `Transcendence.length_sum_le`.
 
 namespace Transcendence
 
-namespace LengthSumLe
-
-open Polynomial
-
-variable {R : Type*} [Semiring R]
-
-/-- The sum of the sizes of the coefficients of `p`. -/
-def lengthSumLeLam (ν : R → ℕ) (p : R[X]) : ℕ :=
-  ∑ n ∈ p.support, ν (p.coeff n)
-
-theorem length_sum_le_lam_zero (ν : R → ℕ) : lengthSumLeLam ν 0 = 0 := by
-  rw [lengthSumLeLam, support_zero, Finset.sum_empty]
-
-/-- The sum may run over any finset containing the support. -/
-theorem length_sum_le_lam_eq_sum (ν : R → ℕ) (hν : ν 0 =
-    0) (p : R[X]) {s : Finset ℕ} (hs : p.support ⊆ s) :
-    lengthSumLeLam ν p = ∑ n ∈ s, ν (p.coeff n) :=
-  Finset.sum_subset hs fun n _ hn => by rw [notMem_support_iff.1 hn, hν]
-
-theorem length_sum_le_lam_add_le (ν : R → ℕ) (hν : ν 0 = 0) (hadd : ∀ a b, ν (a + b) ≤ ν a + ν b)
-    (p q : R[X]) : lengthSumLeLam ν (p + q) ≤ lengthSumLeLam ν p + lengthSumLeLam ν q := by
-  classical
-  rw [length_sum_le_lam_eq_sum ν hν (p + q) support_add,
-      length_sum_le_lam_eq_sum ν hν p Finset.subset_union_left,
-    length_sum_le_lam_eq_sum ν hν q Finset.subset_union_right, ← Finset.sum_add_distrib]
-  exact Finset.sum_le_sum fun n _ => by
-    rw [coeff_add]
-    exact hadd _ _
-
-end LengthSumLe
-
-open LengthSumLe in
+open LengthMulLe in
 /-- **Length of a sum.** For every finite family $(f_i)_{i\in s}$ in $\mathbb{Z}[X][Y]$,
 $$ L\Bigl(\sum_{i\in s}f_i\Bigr)\le\sum_{i\in s}L(f_i). $$ -/
 theorem length_sum_le {ι : Type*} (s : Finset ι) (f : ι → Polynomial (Polynomial ℤ)) :
@@ -73,9 +43,9 @@ theorem length_sum_le {ι : Type*} (s : Finset ι) (f : ι → Polynomial (Polyn
         (((∑ i ∈ s, f i).coeff k).coeff j).natAbs ≤
       ∑ i ∈ s, ∑ k ∈ (f i).support, ∑ j ∈ ((f i).coeff k).support,
         (((f i).coeff k).coeff j).natAbs := by
-  exact Finset.le_sum_of_subadditive (lengthSumLeLam (lengthSumLeLam Int.natAbs))
-      (length_sum_le_lam_zero (lengthSumLeLam Int.natAbs)).le
-    (length_sum_le_lam_add_le (lengthSumLeLam Int.natAbs) (length_sum_le_lam_zero Int.natAbs)
-      (length_sum_le_lam_add_le Int.natAbs Int.natAbs_zero Int.natAbs_add_le)) s f
+  exact Finset.le_sum_of_subadditive (lam (lam Int.natAbs))
+      (lam_zero (lam Int.natAbs)).le
+    (lam_add_le (lam Int.natAbs) (lam_zero Int.natAbs)
+      (lam_add_le Int.natAbs Int.natAbs_zero Int.natAbs_add_le)) s f
 
 end Transcendence

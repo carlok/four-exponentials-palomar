@@ -57,7 +57,7 @@ theorem auxiliary_construction :
     ∀ l₁₁ l₁₂ l₂₁ l₂₂ : ℂ,
       IsAlgebraic ℚ (Complex.exp l₁₁) → IsAlgebraic ℚ (Complex.exp l₁₂) →
       IsAlgebraic ℚ (Complex.exp l₂₁) → IsAlgebraic ℚ (Complex.exp l₂₂) →
-      l₁₁ ≠ 0 → l₁₂ ≠ 0 → l₂₁ ≠ 0 → l₂₂ ≠ 0 →
+      l₁₁ ≠ 0 →
       l₁₁ * l₂₂ = l₁₂ * l₂₁ →
       Algebra.trdeg ℚ ↥(Algebra.adjoin ℚ ({l₁₁, l₁₂, l₂₁, l₂₂} : Set ℂ)) ≤ 1 →
       ¬ (∃ a b : ℚ, ¬(a = 0 ∧ b = 0) ∧
@@ -86,10 +86,9 @@ theorem auxiliary_construction :
                   (∀ i : ℕ, |(P.coeff i : ℝ)| ≤ Real.exp (σ₁ N)) ∧
                   (P.natDegree : ℝ) ≤ σ₂ N ∧
                   ‖Polynomial.aeval ω P‖ < Real.exp (-(C * σ₁ N * σ₂ N)) := by
-  intro l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂ n₁₁ n₁₂ n₂₁ n₂₂ hdet htr hrows hcols
+  intro l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂ n₁₁ hdet htr hrows hcols
   obtain ⟨x₁, x₂, y₁, y₂, hx, hy, hexp, htr'⟩ :=
-    rank_one_parametrization l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂ n₁₁ n₁₂ n₂₁ n₂₂ hdet htr
-      hrows hcols
+    rank_one_parametrization l₁₁ l₁₂ l₂₁ l₂₂ e₁₁ e₁₂ e₂₁ e₂₂ n₁₁ hdet htr hrows hcols
   obtain ⟨ω, hω, k, hk, hcore⟩ := construction_core_1973 x₁ x₂ y₁ y₂ hx hy hexp htr'
   obtain ⟨hm₁, hm₂, ht₁, ht₂, h21, hg₁, hg₂⟩ := construction_growth k hk
   refine ⟨ω, hω, _, _, hm₁, hm₂, ht₁, ht₂, 3, 3, by norm_num, by norm_num, h21, hg₁, hg₂,

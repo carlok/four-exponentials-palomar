@@ -69,11 +69,8 @@ $$ F_q^{(m)}(ay_1+by_2)=0\qquad\text{for all }a<t_1,\ b<t_2,\ m<S. $$ -/
 theorem aux_linear_system
         (x₁ x₂ y₁ y₂ : ℂ)
     (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁,
-        y₂] j))) (ω ω₁ : ℂ) (_hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm :
-            Q.Monic) (_hQd : 0 < Q.natDegree)
+        y₂] j))) (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm : Q.Monic)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
-    (_hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
-        Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)
     (D : Polynomial (Polynomial ℤ)) (E G : Fin 2 → Polynomial (Polynomial ℤ)) (H : Fin 2 → Fin 2 →
         Polynomial (Polynomial ℤ))
     (hD : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ D ≠ 0) (hE : ∀ i,

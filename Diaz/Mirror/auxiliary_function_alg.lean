@@ -76,7 +76,7 @@ theorem auxiliary_function_alg
               (fun i j k' => ∑ μ : Fin M, ∑ ν : Fin Q.natDegree, ((q i j k' μ ν : ℤ) : ℂ) *
                   ω ^ (μ : ℕ) * ω₁ ^ (ν : ℕ)) i j k' * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) *
                       x₁ + ((k' : ℕ) : ℂ) * x₂) * z)) ((a : ℂ) * y₁ + (b : ℂ) * y₂) = 0) := by
-  obtain ⟨κ₁, hκ₁, N₁, hsys⟩ := aux_linear_system x₁ x₂ y₁ y₂ hexp ω ω₁ hω Q hQm hQd hQroot hQmin
+  obtain ⟨κ₁, hκ₁, N₁, hsys⟩ := aux_linear_system x₁ x₂ y₁ y₂ hexp ω ω₁ Q hQm hQroot
     D E G H hD hE hG hH
   obtain ⟨κ, hκle, N₂, hsieg⟩ := siegel_aux ω ω₁ Q hQd hQmin κ₁ hκ₁
   refine ⟨κ, lt_of_lt_of_le hκ₁ hκle, max N₁ N₂, fun N hN => ?_⟩

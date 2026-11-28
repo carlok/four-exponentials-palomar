@@ -102,8 +102,8 @@ of constant $k$. -/
 theorem norm_to_polynomial_alg
     (x₁ x₂ y₁ y₂ : ℂ)
     (hexp : ∀ i j : Fin 2, IsAlgebraic ℚ (Complex.exp (![x₁, x₂] i * ![y₁,
-        y₂] j))) (ω ω₁ : ℂ) (_hω : Transcendental ℚ ω) (Q : Polynomial (Polynomial ℤ)) (hQm :
-            Q.Monic) (hQd : 0 < Q.natDegree)
+        y₂] j))) (ω ω₁ : ℂ) (Q : Polynomial (Polynomial ℤ)) (hQm : Q.Monic)
+    (hQd : 0 < Q.natDegree)
     (hQroot : Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ Q = 0)
     (hQmin : ∀ A : Polynomial (Polynomial ℤ), A.natDegree < Q.natDegree →
         Polynomial.eval₂ (Polynomial.eval₂RingHom (Int.castRingHom ℂ) ω) ω₁ A = 0 → A = 0)

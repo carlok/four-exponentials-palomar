@@ -46,7 +46,7 @@ irreducible divisor $Q$ of $P$ and an integer $s\ge1$ with
 $$ |Q(\alpha)|<H^{-(\lambda-6)n/s},\qquad\deg Q\le n/s, $$
 and every coefficient of $Q$ of absolute value at most $H^{1/s}e^{2n/s}$. -/
 theorem small_irreducible_factor
-    (α : ℂ) (_hα : Transcendental ℚ α) (P : Polynomial ℤ) (hprim : P.IsPrimitive)
+    (α : ℂ) (P : Polynomial ℤ) (hprim : P.IsPrimitive)
     (H n lam : ℝ) (hPH : ∀ i : ℕ, |(P.coeff i : ℝ)| ≤ H)
     (hlog : n ≤ Real.log H) (hdeg : (P.natDegree : ℝ) ≤ n) (hlam : 6 < lam)
     (hsmall : ‖Polynomial.aeval α P‖ < H ^ (-(lam * n))) :

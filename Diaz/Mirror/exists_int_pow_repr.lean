@@ -77,7 +77,7 @@ theorem red_natDegree (hd : 0 < m.natDegree) : ∀ n, (red m n).natDegree < m.na
         show j' = m.natDegree - 1 by omega]
       ring
 
-theorem aeval_red {K : Type*} [Field K] {α : K} (hα : aeval α m = 0) :
+theorem aeval_red {K : Type*} [CommRing K] {α : K} (hα : aeval α m = 0) :
     ∀ n, aeval α (red m n) = (m.leadingCoeff : K) ^ n * α ^ n
   | 0 => by rw [red, map_one (aeval (R := ℤ) α), pow_zero, pow_zero, one_mul]
   | n + 1 => by

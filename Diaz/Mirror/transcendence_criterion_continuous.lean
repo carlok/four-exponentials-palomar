@@ -134,7 +134,7 @@ theorem transcendence_criterion_continuous
     have hpα : ‖aeval α (P q).primPart‖ ≤ ‖aeval α (P q)‖ := by
       conv_rhs => rw [hdec, map_mul, aeval_C, norm_mul]
       exact le_mul_of_one_le_left (norm_nonneg _) (by simpa using hc1)
-    obtain ⟨Q, -, hprim, hirr, s, hs, hQα, hQh, hQd⟩ := small_irreducible_factor α hα
+    obtain ⟨Q, -, hprim, hirr, s, hs, hQα, hQh, hQd⟩ := small_irreducible_factor α
       (P q).primPart (isPrimitive_primPart _) (Real.exp (σ₁ q)) (σ₂ q) C hpH
       (by rw [Real.log_exp]; exact h₂₁ q (by linarith))
       (by rw [natDegree_primPart]; exact hP_deg q hq) (by linarith)

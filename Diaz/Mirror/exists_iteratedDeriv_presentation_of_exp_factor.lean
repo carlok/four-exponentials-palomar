@@ -14,6 +14,7 @@ public import Mathlib.Tactic.Choose
 public import Mathlib.Tactic.FunProp
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.SplitIfs
+public import Diaz.Mirror.presentation_size
 
 /-!
 # Integer presentations of the derivatives, from a presented exponential factor
@@ -28,11 +29,11 @@ length at most `L` and degrees at most `d`.
   the number `δ^(m+S) ζ^(i-l) β^(m-l) Λ₁ e^(βζ)` is `φ` of
   `D^l (j E₀ + k E₁)^(m-l) (a G₀ + b G₁)^(i-l) D^(S-i+l) U_{jk}`. For `l > i` the Leibniz term
   vanishes.
-* **Sizes.** Lengths are controlled by `existsIteratedDerivPresentationOfExpFactorLen(PQ) ≤
-  existsIteratedDerivPresentationOfExpFactorLen(P)
-  existsIteratedDerivPresentationOfExpFactorLen(Q)` and
-  `existsIteratedDerivPresentationOfExpFactorLen(∑ Pᵢ) ≤ ∑
-  existsIteratedDerivPresentationOfExpFactorLen(Pᵢ)`; the
+* **Sizes.** Lengths are controlled by `len(PQ) ≤
+  len(P)
+  len(Q)` and
+  `len(∑ Pᵢ) ≤ ∑
+  len(Pᵢ)`; the
   degrees in `X` and `Y` add up under products. If `c₀` bounds the lengths and degrees of `D`, `E`
   and `G`, the lengths of the `P_{ijk}` are at most `K^(4m+S) L` with `K = 2(1+m+S+T+a+b)c₀`,
   and their degrees at most `(2m+S)c₀ + d`. For `c = 2c₀ + 4`,
@@ -52,249 +53,36 @@ namespace Diaz
 
 namespace ExistsIteratedDerivPresentationOfExpFactor
 
-open Polynomial
+open Polynomial PresentationSize
 
 /-! ### Length and size of integer polynomials in two variables -/
 
-/-- The length of `P ∈ ℤ[X][Y]`: the sum of the absolute values of all its integer coefficients. -/
-noncomputable def existsIteratedDerivPresentationOfExpFactorLen (P : ℤ[X][X]) : ℕ :=
-  ∑ r ∈ P.support, ∑ h ∈ (P.coeff r).support, ((P.coeff r).coeff h).natAbs
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_len_mul (P Q : ℤ[X][X]) :
-    existsIteratedDerivPresentationOfExpFactorLen (P * Q) ≤
-        existsIteratedDerivPresentationOfExpFactorLen P *
-            existsIteratedDerivPresentationOfExpFactorLen Q :=
-  Transcendence.length_mul_le P Q
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_len_sum {ι : Type*} (s : Finset ι) (f : ι →
-    ℤ[X][X]) :
-    existsIteratedDerivPresentationOfExpFactorLen (∑ i ∈ s, f i) ≤ ∑ i ∈ s,
-        existsIteratedDerivPresentationOfExpFactorLen (f i) :=
-  Transcendence.length_sum_le s f
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_len_add (P Q : ℤ[X][X]) :
-    existsIteratedDerivPresentationOfExpFactorLen (P + Q) ≤
-        existsIteratedDerivPresentationOfExpFactorLen P +
-            existsIteratedDerivPresentationOfExpFactorLen Q := by
-  have h := exists_iteratedDeriv_presentation_of_exp_factor_len_sum (Finset.univ : Finset (Fin 2))
-      ![P, Q]
-  rw [Fin.sum_univ_two, Fin.sum_univ_two] at h
-  exact h
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_len_CC (z : ℤ) :
-    existsIteratedDerivPresentationOfExpFactorLen (C (C z)) = z.natAbs := by
-  rcases eq_or_ne z 0 with rfl | hz
-  · rw [Polynomial.C_0, Polynomial.C_0, existsIteratedDerivPresentationOfExpFactorLen,
-      Polynomial.support_zero, Finset.sum_empty,
-      Int.natAbs_zero]
-  · rw [existsIteratedDerivPresentationOfExpFactorLen,
-      Polynomial.support_C (Polynomial.C_ne_zero.2 hz), Finset.sum_singleton,
-      Polynomial.coeff_C_zero, Polynomial.support_C hz, Finset.sum_singleton,
-      Polynomial.coeff_C_zero]
-
-/-- `P` has length at most `b`, and degrees at most `d` in `X` and in `Y`. -/
-def existsIteratedDerivPresentationOfExpFactorSz (P : ℤ[X][X]) (b d : ℕ) : Prop :=
-  existsIteratedDerivPresentationOfExpFactorLen P ≤ b ∧ (∀ r,
-      (P.coeff r).natDegree ≤ d) ∧ P.natDegree ≤ d
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_mono {P : ℤ[X][X]} {b b' d d' : ℕ} (h :
-    existsIteratedDerivPresentationOfExpFactorSz P b d) (hb : b ≤ b') (hd : d ≤ d') :
-    existsIteratedDerivPresentationOfExpFactorSz P b' d' :=
-  ⟨h.1.trans hb, fun r => (h.2.1 r).trans hd, h.2.2.trans hd⟩
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_mul {P Q : ℤ[X][X]} {b₁ b₂ d₁ d₂ : ℕ} (hP :
-    existsIteratedDerivPresentationOfExpFactorSz P b₁ d₁) (hQ :
-        existsIteratedDerivPresentationOfExpFactorSz Q b₂ d₂) :
-    existsIteratedDerivPresentationOfExpFactorSz (P * Q) (b₁ * b₂) (d₁ + d₂) := by
-  refine ⟨(exists_iteratedDeriv_presentation_of_exp_factor_len_mul P Q).trans (Nat.mul_le_mul hP.1
-      hQ.1), fun r => ?_,
-    Polynomial.natDegree_mul_le.trans (Nat.add_le_add hP.2.2 hQ.2.2)⟩
-  rw [Polynomial.coeff_mul]
-  exact Polynomial.natDegree_sum_le_of_forall_le _ _ fun x _ =>
-    Polynomial.natDegree_mul_le.trans (Nat.add_le_add (hP.2.1 x.1) (hQ.2.1 x.2))
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_add {P Q : ℤ[X][X]} {b₁ b₂ d : ℕ} (hP :
-    existsIteratedDerivPresentationOfExpFactorSz P b₁ d) (hQ :
-        existsIteratedDerivPresentationOfExpFactorSz Q b₂ d) :
-    existsIteratedDerivPresentationOfExpFactorSz (P + Q) (b₁ + b₂) d := by
-  refine ⟨(exists_iteratedDeriv_presentation_of_exp_factor_len_add P Q).trans (Nat.add_le_add hP.1
-      hQ.1), fun r => ?_,
-    (Polynomial.natDegree_add_le P Q).trans (max_le hP.2.2 hQ.2.2)⟩
-  rw [Polynomial.coeff_add]
-  exact (Polynomial.natDegree_add_le _ _).trans (max_le (hP.2.1 r) (hQ.2.1 r))
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_sum {ι : Type*} (s : Finset ι) (f : ι →
-    ℤ[X][X]) {b d : ℕ}
-    (h : ∀ i ∈ s, existsIteratedDerivPresentationOfExpFactorSz (f i) b d) :
-        existsIteratedDerivPresentationOfExpFactorSz (∑ i ∈ s, f i) (s.card * b) d := by
-  refine ⟨(exists_iteratedDeriv_presentation_of_exp_factor_len_sum s f).trans ?_, fun r => ?_,
-    Polynomial.natDegree_sum_le_of_forall_le _ _ fun i hi => (h i hi).2.2⟩
-  · rw [← smul_eq_mul, ← Finset.sum_const]
-    exact Finset.sum_le_sum fun i hi => (h i hi).1
-  · rw [Polynomial.finsetSum_coeff]
-    exact Polynomial.natDegree_sum_le_of_forall_le _ _ fun i hi => (h i hi).2.1 r
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_CC (z : ℤ) :
-    existsIteratedDerivPresentationOfExpFactorSz (C (C z)) z.natAbs 0 := by
-  refine ⟨(exists_iteratedDeriv_presentation_of_exp_factor_len_CC z).le, fun r => ?_,
-      (Polynomial.natDegree_C _).le⟩
-  rw [Polynomial.coeff_C]
-  split_ifs
-  · exact (Polynomial.natDegree_C z).le
-  · exact Polynomial.natDegree_zero.le
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_CN (n : ℕ) :
-    existsIteratedDerivPresentationOfExpFactorSz (C (C (n : ℤ))) n 0 :=
-  exists_iteratedDeriv_presentation_of_exp_factor_sz_CC (n : ℤ)
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_one :
-    existsIteratedDerivPresentationOfExpFactorSz 1 1 0 := by
-  have h := exists_iteratedDeriv_presentation_of_exp_factor_sz_CC 1
-  rw [Polynomial.C_1, Polynomial.C_1] at h
-  exact h
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_pow {P : ℤ[X][X]} {b d : ℕ} (h :
-    existsIteratedDerivPresentationOfExpFactorSz P b d) : ∀ n : ℕ,
-        existsIteratedDerivPresentationOfExpFactorSz (P ^ n) (b ^ n) (n * d)
-  | 0 => by
-    rw [pow_zero, pow_zero, Nat.zero_mul]
-    exact exists_iteratedDeriv_presentation_of_exp_factor_sz_one
-  | n + 1 => by
-    rw [pow_succ, pow_succ, Nat.succ_mul]
-    exact exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-        (exists_iteratedDeriv_presentation_of_exp_factor_sz_pow h n) h
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_exists (P : ℤ[X][X]) : ∃ c,
-    existsIteratedDerivPresentationOfExpFactorSz P c c := by
-  refine ⟨existsIteratedDerivPresentationOfExpFactorLen P + (∑ k ∈ Finset.range (P.natDegree +
-      1), (P.coeff k).natDegree) + P.natDegree,
-    by omega, fun r => ?_, by omega⟩
-  by_cases hr : r ≤ P.natDegree
-  · have : (P.coeff r).natDegree ≤ ∑ k ∈ Finset.range (P.natDegree + 1), (P.coeff k).natDegree :=
-      Finset.single_le_sum (f := fun k => (P.coeff k).natDegree) (fun _ _ => Nat.zero_le _)
-        (Finset.mem_range.2 (Nat.lt_succ_of_le hr))
-    omega
-  · rw [Polynomial.coeff_eq_zero_of_natDegree_lt (not_le.1 hr), Polynomial.natDegree_zero]
-    exact Nat.zero_le _
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_exists_fam {ι : Type*} [Finite ι] (F : ι →
-    ℤ[X][X]) : ∃ c, ∀ i, existsIteratedDerivPresentationOfExpFactorSz (F i) c c := by
-  have := Fintype.ofFinite ι
-  choose c hc using fun i => exists_iteratedDeriv_presentation_of_exp_factor_sz_exists (F i)
-  have hle : ∀ i, c i ≤ ∑ i', c i' := fun i =>
-    Finset.single_le_sum (f := c) (fun _ _ => Nat.zero_le _) (Finset.mem_univ i)
-  exact ⟨∑ i, c i, fun i => exists_iteratedDeriv_presentation_of_exp_factor_sz_mono (hc i) (hle i)
-      (hle i)⟩
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_succ_le_two_pow : ∀ m : ℕ, m + 1 ≤ 2 ^ m
-  | 0 => le_rfl
-  | m + 1 => by
-    have := exists_iteratedDeriv_presentation_of_exp_factor_succ_le_two_pow m
-    rw [pow_succ]
-    omega
-
 /-! ### Values of integer polynomials -/
 
-lemma exists_iteratedDeriv_presentation_of_exp_factor_phi_CC (φ : ℤ[X][X] →+* ℂ) (z : ℤ) : φ (C (C
-    z)) = (z : ℂ) :=
-  eq_intCast (φ.comp ((C : ℤ[X] →+* ℤ[X][X]).comp (C : ℤ →+* ℤ[X]))) z
-
-/-- If `u φ(D) = φ(U)` and `v φ(D) = φ(V)`, then `(p u + q v) φ(D) = φ(p U + q V)`. -/
-lemma exists_iteratedDeriv_presentation_of_exp_factor_lin_eval (φ : ℤ[X][X] →+* ℂ) {u v : ℂ} {Dp U V
-    : ℤ[X][X]} (hU : u * φ Dp = φ U)
-    (hV : v * φ Dp = φ V) (p q : ℕ) :
-    ((p : ℂ) * u + (q : ℂ) * v) * φ Dp = φ (C (C (p : ℤ)) * U + C (C (q : ℤ)) * V) := by
-  rw [map_add φ, map_mul φ, map_mul φ, exists_iteratedDeriv_presentation_of_exp_factor_phi_CC φ,
-      exists_iteratedDeriv_presentation_of_exp_factor_phi_CC φ, ← hU, ← hV, Int.cast_natCast,
-    Int.cast_natCast]
-  ring
-
 lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_lin {U V : ℤ[X][X]} {c : ℕ} (hU :
-    existsIteratedDerivPresentationOfExpFactorSz U c c) (hV :
-        existsIteratedDerivPresentationOfExpFactorSz V c c) (p q : ℕ) :
-    existsIteratedDerivPresentationOfExpFactorSz (C (C (p : ℤ)) * U + C (C (q : ℤ)) * V) ((p +
+    Sz U c c) (hV :
+        Sz V c c) (p q : ℕ) :
+    Sz (C (C (p : ℤ)) * U + C (C (q : ℤ)) * V) ((p +
         q) * c) c :=
-  exists_iteratedDeriv_presentation_of_exp_factor_sz_mono
-      (exists_iteratedDeriv_presentation_of_exp_factor_sz_add
-          (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-              (exists_iteratedDeriv_presentation_of_exp_factor_sz_CN p) hU)
-                  (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-                      (exists_iteratedDeriv_presentation_of_exp_factor_sz_CN q) hV)) (Nat.add_mul p
+  sz_mono
+      (sz_add
+          (sz_mul
+              (sz_CN p) hU)
+                  (sz_mul
+                      (sz_CN q) hV)) (Nat.add_mul p
                           q c).symm.le
     (Nat.zero_add c).le
 
 /-! ### The presentation of the derivative -/
 
-/-- Leibniz's rule for the exponential polynomial, linearly in its coefficients. -/
-lemma exists_iteratedDeriv_presentation_of_exp_factor_iteratedDeriv_expPoly (S T m : ℕ) (x₁ x₂ : ℂ)
-    (f : Fin S → Fin T → Fin T → ℂ) (w : ℂ) :
-    iteratedDeriv m (fun z : ℂ => ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T,
-        f i j k * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * z)) w =
-      ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T, f i j k *
-        ∑ l ∈ Finset.range (m + 1), (m.choose l : ℂ) *
-          (((i : ℕ).descFactorial l : ℂ) * w ^ ((i : ℕ) - l)) *
-          ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) ^ (m - l) *
-            Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * w)) := by
-  have key : ∀ (i : Fin S) (j k : Fin T), iteratedDeriv m (fun z : ℂ =>
-      f i j k * z ^ (i : ℕ) * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * z)) w =
-      f i j k * ∑ l ∈ Finset.range (m + 1), (m.choose l : ℂ) *
-        (((i : ℕ).descFactorial l : ℂ) * w ^ ((i : ℕ) - l)) *
-          ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) ^ (m - l) *
-            Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * w)) := by
-    intro i j k
-    have h1 : ContDiffAt ℂ m (fun z : ℂ => z ^ (i : ℕ)) w := (contDiff_id.pow _).contDiffAt
-    have h2 : ContDiffAt ℂ m (fun z : ℂ =>
-        Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) * z)) w := by fun_prop
-    simp_rw [mul_assoc (f i j k)]
-    rw [iteratedDeriv_const_mul_field, iteratedDeriv_fun_mul h1 h2]
-    congr 1
-    refine Finset.sum_congr rfl fun l _ => ?_
-    rw [iteratedDeriv_pow, iteratedDeriv_cexp_const_mul]
-  rw [iteratedDeriv_fun_sum (fun i _ => by fun_prop)]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [iteratedDeriv_fun_sum (fun j _ => by fun_prop)]
-  refine Finset.sum_congr rfl fun j _ => ?_
-  rw [iteratedDeriv_fun_sum (fun k _ => by fun_prop)]
-  exact Finset.sum_congr rfl fun k _ => key i j k
-
-/-- The integer polynomial `∑_{l ≤ m} C(m,l) i(i-1)⋯(i-l+1) D^l B^(m-l) Z^(i-l) D^(S-i+l) e`. -/
-noncomputable def existsIteratedDerivPresentationOfExpFactorPres (Dp Bp Zp ep : ℤ[X][X]) (S m
-    i : ℕ) : ℤ[X][X] :=
-  ∑ l ∈ Finset.range (m + 1), C (C ((m.choose l * i.descFactorial l : ℕ) : ℤ)) *
-    (Dp ^ l * Bp ^ (m - l) * Zp ^ (i - l) * Dp ^ (S - i + l)) * ep
-
-lemma exists_iteratedDeriv_presentation_of_exp_factor_pres_eval (φ : ℤ[X][X] →+* ℂ) {Dp Bp Zp ep :
-    ℤ[X][X]} {β ζ Λ' e : ℂ}
-    (hB : β * φ Dp = φ Bp) (hZ : ζ * φ Dp = φ Zp) (he : φ ep = Λ' * e) {S m i : ℕ} (hi : i < S) :
-    φ (existsIteratedDerivPresentationOfExpFactorPres Dp Bp Zp ep S m i) = φ Dp ^ (m + S) * Λ'
-        *
-      ∑ l ∈ Finset.range (m + 1), (m.choose l : ℂ) * ((i.descFactorial l : ℂ) * ζ ^ (i - l)) *
-        (β ^ (m - l) * e) := by
-  rw [existsIteratedDerivPresentationOfExpFactorPres, map_sum φ, Finset.mul_sum]
-  refine Finset.sum_congr rfl fun l hl => ?_
-  have hl' := Finset.mem_range.1 hl
-  simp only [map_mul φ, map_pow φ]
-  rw [← hB, ← hZ, he, exists_iteratedDeriv_presentation_of_exp_factor_phi_CC φ, Int.cast_natCast,
-      Nat.cast_mul]
-  rcases Nat.lt_or_ge i l with h | h
-  · rw [Nat.descFactorial_eq_zero_iff_lt.2 h, Nat.cast_zero]
-    ring
-  · have hδ : φ Dp ^ (m + S) =
-        φ Dp ^ l * φ Dp ^ (m - l) * φ Dp ^ (i - l) * φ Dp ^ (S - i + l) := by
-      rw [← pow_add, ← pow_add, ← pow_add]
-      congr 1
-      omega
-    rw [hδ, mul_pow, mul_pow]
-    ring
-
 lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_pres {Dp Bp Zp ep : ℤ[X][X]} {K c E dE S m
-    i : ℕ} (hD : existsIteratedDerivPresentationOfExpFactorSz Dp K c) (hB :
-        existsIteratedDerivPresentationOfExpFactorSz Bp K c)
-    (hZ : existsIteratedDerivPresentationOfExpFactorSz Zp K c) (he :
-        existsIteratedDerivPresentationOfExpFactorSz ep E dE) (hi : i < S) (hK : 2 * (i + 1) ≤
+    i : ℕ} (hD : Sz Dp K c) (hB :
+        Sz Bp K c)
+    (hZ : Sz Zp K c) (he :
+        Sz ep E dE) (hi : i < S) (hK : 2 * (i + 1) ≤
             K) :
-    existsIteratedDerivPresentationOfExpFactorSz
-        (existsIteratedDerivPresentationOfExpFactorPres Dp Bp Zp ep S m i) (K ^ (4 * m + S) *
+    Sz
+        (pres Dp Bp Zp ep S m i) (K ^ (4 * m + S) *
             E) ((2 * m + S) * c + dE) := by
   have hK0 : 0 < K := by omega
   have hcoef : ∀ l, l ≤ m → m.choose l * i.descFactorial l ≤ K ^ m := fun l hl =>
@@ -304,23 +92,23 @@ lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_pres {Dp Bp Zp ep : ℤ
               (Nat.pow_le_pow_right (Nat.succ_pos i) hl)))
       _ = (2 * (i + 1)) ^ m := (Nat.mul_pow 2 (i + 1) m).symm
       _ ≤ K ^ m := Nat.pow_le_pow_left hK m
-  have h : existsIteratedDerivPresentationOfExpFactorSz
-      (existsIteratedDerivPresentationOfExpFactorPres Dp Bp Zp ep S m i) ((Finset.range (m +
+  have h : Sz
+      (pres Dp Bp Zp ep S m i) ((Finset.range (m +
           1)).card * (K ^ (3 * m + S) * E))
       ((2 * m + S) * c + dE) :=
-    exists_iteratedDeriv_presentation_of_exp_factor_sz_sum (Finset.range (m + 1)) _ fun l hl => by
+    sz_sum (Finset.range (m + 1)) _ fun l hl => by
       have hl' := Finset.mem_range.1 hl
-      refine exists_iteratedDeriv_presentation_of_exp_factor_sz_mono
-          (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-              (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-                  (exists_iteratedDeriv_presentation_of_exp_factor_sz_CN _)
-                      (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-                          (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-                              (exists_iteratedDeriv_presentation_of_exp_factor_sz_mul
-                                  (exists_iteratedDeriv_presentation_of_exp_factor_sz_pow hD l)
-        (exists_iteratedDeriv_presentation_of_exp_factor_sz_pow hB (m -
-            l))) (exists_iteratedDeriv_presentation_of_exp_factor_sz_pow hZ (i -
-                l))) (exists_iteratedDeriv_presentation_of_exp_factor_sz_pow hD (S - i +
+      refine sz_mono
+          (sz_mul
+              (sz_mul
+                  (sz_CN _)
+                      (sz_mul
+                          (sz_mul
+                              (sz_mul
+                                  (sz_pow hD l)
+        (sz_pow hB (m -
+            l))) (sz_pow hZ (i -
+                l))) (sz_pow hD (S - i +
                     l)))) he) ?_ ?_
       · refine Nat.mul_le_mul_right E ?_
         rw [← pow_add, ← pow_add, ← pow_add]
@@ -330,10 +118,10 @@ lemma exists_iteratedDeriv_presentation_of_exp_factor_sz_pres {Dp Bp Zp ep : ℤ
           _ = K ^ (3 * m + S) := by rw [← pow_add, show m + (2 * m + S) = 3 * m + S by omega]
       · rw [Nat.zero_add, ← Nat.add_mul, ← Nat.add_mul, ← Nat.add_mul]
         exact Nat.add_le_add_right (Nat.mul_le_mul_right c (by omega)) dE
-  refine exists_iteratedDeriv_presentation_of_exp_factor_sz_mono h ?_ le_rfl
+  refine sz_mono h ?_ le_rfl
   rw [Finset.card_range]
   calc (m + 1) * (K ^ (3 * m + S) * E) ≤ K ^ m * (K ^ (3 * m + S) * E) :=
-        Nat.mul_le_mul_right _ ((exists_iteratedDeriv_presentation_of_exp_factor_succ_le_two_pow
+        Nat.mul_le_mul_right _ ((succ_le_two_pow
             m).trans (Nat.pow_le_pow_left (by omega) m))
     _ = K ^ (4 * m + S) * E := by
         rw [← Nat.mul_assoc, ← pow_add, show m + (3 * m + S) = 4 * m + S by omega]
@@ -345,7 +133,7 @@ factor. -/
 noncomputable def existsIteratedDerivPresentationOfExpFactorPpol (D : ℤ[X][X]) (E G : Fin 2 →
     ℤ[X][X]) (ep : ℤ[X][X]) (S a b m i j k : ℕ) :
     ℤ[X][X] :=
-  existsIteratedDerivPresentationOfExpFactorPres D (C (C (j : ℤ)) * E 0 + C (C (k : ℤ)) *
+  pres D (C (C (j : ℤ)) * E 0 + C (C (k : ℤ)) *
       E 1) (C (C (a : ℤ)) * G 0 + C (C (b : ℤ)) * G 1)
     ep S m i
 
@@ -354,13 +142,13 @@ theorem exists_iteratedDeriv_presentation_of_exp_factor_main (x₁ x₂ y₁ y�
     (D : ℤ[X][X]) (E G : Fin 2 → ℤ[X][X])
     (hE : ∀ i, ![x₁, x₂] i * φ D = φ (E i)) (hG : ∀ j, ![y₁, y₂] j * φ D = φ (G j)) :
     ∃ c : ℕ, ∀ (S T a b m : ℕ) (Λ₁ : ℂ) (L d : ℕ) (U : Fin T → Fin T → ℤ[X][X]),
-      (∀ j k, existsIteratedDerivPresentationOfExpFactorLen (U j k) ≤ L) → (∀ j k r,
+      (∀ j k, len (U j k) ≤ L) → (∀ j k r,
           ((U j k).coeff r).natDegree ≤ d) →
       (∀ j k, (U j k).natDegree ≤ d) →
       (∀ j k : Fin T, φ (U j k) = Λ₁ * Complex.exp ((((j : ℕ) : ℂ) * x₁ + ((k : ℕ) : ℂ) * x₂) *
         ((a : ℂ) * y₁ + (b : ℂ) * y₂))) →
       ∃ P : Fin S → Fin T → Fin T → ℤ[X][X],
-        (∀ i j k, existsIteratedDerivPresentationOfExpFactorLen (P i j k) ≤
+        (∀ i j k, len (P i j k) ≤
           c ^ (c * (1 + m + S)) * (1 + m + S + T + a + b) ^ (c * (1 + m + S)) * L) ∧
         (∀ i j k r, ((P i j k).coeff r).natDegree ≤ c * (1 + m + S) + d) ∧
         (∀ i j k, (P i j k).natDegree ≤ c * (1 + m + S) + d) ∧
@@ -371,16 +159,16 @@ theorem exists_iteratedDeriv_presentation_of_exp_factor_main (x₁ x₂ y₁ y�
             ((a : ℂ) * y₁ + (b : ℂ) * y₂) =
           ∑ i : Fin S, ∑ j : Fin T, ∑ k : Fin T, f i j k * φ (P i j k) := by
   -- a common size `c₀` for the data
-  obtain ⟨cD, hcD⟩ := exists_iteratedDeriv_presentation_of_exp_factor_sz_exists D
-  obtain ⟨cE, hcE⟩ := exists_iteratedDeriv_presentation_of_exp_factor_sz_exists_fam E
-  obtain ⟨cG, hcG⟩ := exists_iteratedDeriv_presentation_of_exp_factor_sz_exists_fam G
+  obtain ⟨cD, hcD⟩ := sz_exists D
+  obtain ⟨cE, hcE⟩ := sz_exists_fam E
+  obtain ⟨cG, hcG⟩ := sz_exists_fam G
   obtain ⟨c₀, hc₀⟩ : ∃ c₀, c₀ = cD + cE + cG + 1 := ⟨_, rfl⟩
-  have hD0 : existsIteratedDerivPresentationOfExpFactorSz D c₀ c₀ :=
-      exists_iteratedDeriv_presentation_of_exp_factor_sz_mono hcD (by omega) (by omega)
-  have hE0 : ∀ p, existsIteratedDerivPresentationOfExpFactorSz (E p) c₀ c₀ :=
-      fun p => exists_iteratedDeriv_presentation_of_exp_factor_sz_mono (hcE p) (by omega) (by omega)
-  have hG0 : ∀ q, existsIteratedDerivPresentationOfExpFactorSz (G q) c₀ c₀ :=
-      fun q => exists_iteratedDeriv_presentation_of_exp_factor_sz_mono (hcG q) (by omega) (by omega)
+  have hD0 : Sz D c₀ c₀ :=
+      sz_mono hcD (by omega) (by omega)
+  have hE0 : ∀ p, Sz (E p) c₀ c₀ :=
+      fun p => sz_mono (hcE p) (by omega) (by omega)
+  have hG0 : ∀ q, Sz (G q) c₀ c₀ :=
+      fun q => sz_mono (hcG q) (by omega) (by omega)
   obtain ⟨c, hc⟩ : ∃ c, c = 2 * c₀ + 4 := ⟨_, rfl⟩
   refine ⟨c, fun S T a b m Λ₁ L d U hUl hUx hUy hU => ?_⟩
   obtain ⟨Q, hQ⟩ : ∃ Q, Q = 1 + m + S + T + a + b := ⟨_, rfl⟩
@@ -406,15 +194,15 @@ theorem exists_iteratedDeriv_presentation_of_exp_factor_main (x₁ x₂ y₁ y�
     omega
   -- sizes of the `P_{ijk}`
   have hsz : ∀ (i : Fin S) (j k : Fin T),
-      existsIteratedDerivPresentationOfExpFactorSz
+      Sz
           (existsIteratedDerivPresentationOfExpFactorPpol D E G (U j k) S a b m i j k)
       (K ^ (4 * m + S) * L) ((2 * m + S) * c₀ + d) := fun i j k =>
     exists_iteratedDeriv_presentation_of_exp_factor_sz_pres
-        (exists_iteratedDeriv_presentation_of_exp_factor_sz_mono hD0 hc₀K le_rfl)
-      (exists_iteratedDeriv_presentation_of_exp_factor_sz_mono
+        (sz_mono hD0 hc₀K le_rfl)
+      (sz_mono
           (exists_iteratedDeriv_presentation_of_exp_factor_sz_lin (hE0 0) (hE0 1) (j : ℕ) (k : ℕ))
         (by rw [hK]; exact Nat.mul_le_mul_right c₀ (by omega)) le_rfl)
-      (exists_iteratedDeriv_presentation_of_exp_factor_sz_mono
+      (sz_mono
           (exists_iteratedDeriv_presentation_of_exp_factor_sz_lin (hG0 0) (hG0 1) a b)
         (by rw [hK]; exact Nat.mul_le_mul_right c₀ (by omega)) le_rfl)
       ⟨hUl j k, hUx j k, hUy j k⟩ i.2 (by have := i.2; omega)
@@ -423,7 +211,7 @@ theorem exists_iteratedDeriv_presentation_of_exp_factor_main (x₁ x₂ y₁ y�
     fun i j k r => ((hsz i j k).2.1 r).trans hdeg, fun i j k => (hsz i j k).2.2.trans hdeg,
     fun f => ?_⟩
   · -- the length of `P_{ijk}`
-    calc existsIteratedDerivPresentationOfExpFactorLen
+    calc len
            (existsIteratedDerivPresentationOfExpFactorPpol D E G (U j k) S a b m i j k)
         ≤ K ^ (4 * m + S) * L := (hsz i j k).1
       _ = (2 * c₀) ^ (4 * m + S) * Q ^ (4 * m + S) * L := by rw [hK]; ring
@@ -432,7 +220,7 @@ theorem exists_iteratedDeriv_presentation_of_exp_factor_main (x₁ x₂ y₁ y�
             ((Nat.pow_le_pow_left (by omega) _).trans (Nat.pow_le_pow_right (by omega) hmS))
             (Nat.pow_le_pow_right (by omega) hmS))
   · -- the identity, by Leibniz's rule
-    rw [exists_iteratedDeriv_presentation_of_exp_factor_iteratedDeriv_expPoly S T m x₁ x₂ f,
+    rw [iteratedDeriv_expPoly S T m x₁ x₂ f,
         Finset.mul_sum]
     refine Finset.sum_congr rfl fun i _ => ?_
     rw [Finset.mul_sum]
@@ -440,16 +228,16 @@ theorem exists_iteratedDeriv_presentation_of_exp_factor_main (x₁ x₂ y₁ y�
     rw [Finset.mul_sum]
     refine Finset.sum_congr rfl fun k _ => ?_
     dsimp only [existsIteratedDerivPresentationOfExpFactorPpol]
-    rw [exists_iteratedDeriv_presentation_of_exp_factor_pres_eval φ
-        (exists_iteratedDeriv_presentation_of_exp_factor_lin_eval φ (u := x₁) (v :=
+    rw [pres_eval φ
+        (lin_eval φ (u := x₁) (v :=
             x₂) (hE 0) (hE 1) (j : ℕ) (k : ℕ))
-      (exists_iteratedDeriv_presentation_of_exp_factor_lin_eval φ (u := y₁) (v :=
+      (lin_eval φ (u := y₁) (v :=
           y₂) (hG 0) (hG 1) a b) (hU j k) i.2]
     exact mul_left_comm _ _ _
 
 end ExistsIteratedDerivPresentationOfExpFactor
 
-open ExistsIteratedDerivPresentationOfExpFactor in
+open ExistsIteratedDerivPresentationOfExpFactor PresentationSize in
 /-- **Presentations from the exponential factor.** Let
 $x_1,x_2,y_1,y_2,\omega,\omega_1\in\mathbb{C}$, let $\varphi$ be evaluation at $(\omega,\omega_1)$,
 and let $D,E_i,G_j\in\mathbb{Z}[X][Y]$ with $x_i\varphi(D)=\varphi(E_i)$ and
